@@ -1,0 +1,106 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e3]:
+    - link "skip to content" [ref=e4] [cursor=pointer]:
+      - /url: "#MainContent"
+    - generic [ref=e5]:
+      - navigation [ref=e6]:
+        - link "Supreme Home" [ref=e7] [cursor=pointer]:
+          - /url: /
+          - img "Siberia Logo" [ref=e9]
+        - heading "09/18/2026 06:48pm NYC" [level=2] [ref=e20]
+      - main [ref=e21]:
+        - generic "News posts list" [ref=e24]:
+          - heading "News" [level=1] [ref=e25]
+          - generic [ref=e26]:
+            - generic [ref=e29]:
+              - generic [ref=e30]:
+                - link "View image 1 of 7" [ref=e32] [cursor=pointer]:
+                  - /url: /news/1034/images?=1
+                  - img "Supreme Seoul - Seongsu (1 of 7)" [ref=e34]
+                - link "View image 2 of 7" [ref=e35] [cursor=pointer]:
+                  - /url: /news/1034/images?=2
+                  - img "Supreme Seoul - Seongsu (2 of 7)" [ref=e37]
+                - link "View image 3 of 7" [ref=e38] [cursor=pointer]:
+                  - /url: /news/1034/images?=3
+                  - img "Supreme Seoul - Seongsu (3 of 7)" [ref=e40]
+                - generic:
+                  - link "View image 4 of 7":
+                    - /url: /news/1034/images?=4
+                - generic:
+                  - link "View image 5 of 7":
+                    - /url: /news/1034/images?=5
+                - generic:
+                  - link "View image 6 of 7":
+                    - /url: /news/1034/images?=6
+                - generic:
+                  - link "View image 7 of 7":
+                    - /url: /news/1034/images?=7
+              - generic [ref=e41]:
+                - text: 1 of 7
+                - button "Next slide" [ref=e42] [cursor=pointer]:
+                  - img "Arrow" [ref=e43]
+            - generic [ref=e45]:
+              - heading "09/11/2026" [level=2] [ref=e46]
+              - heading "Supreme Seoul - Seongsu" [level=1] [ref=e47]
+              - generic [ref=e48]:
+                - paragraph [ref=e50]:
+                  - text: "On Saturday September 12th, Supreme will open its newest location in Seoul.The store is located at:"
+                  - strong [ref=e51]: "22 Seongsui-ro 7-gilSeongdong-gu, Seoul 04781Tel: +82-02-2088-484611 - 8 Monday - Sunday"
+                - button "archive" [ref=e52] [cursor=pointer]
+      - contentinfo [ref=e53]:
+        - generic [ref=e54]:
+          - list [ref=e55]:
+            - listitem [ref=e56]:
+              - link "shop" [ref=e57] [cursor=pointer]:
+                - /url: https://us.supreme.com/pages/shop
+          - list [ref=e58]:
+            - listitem [ref=e59]:
+              - link "fall/winter 2026 preview" [ref=e61] [cursor=pointer]:
+                - /url: /previews/fallwinter2026
+              - list [ref=e62]:
+                - listitem [ref=e63] [cursor=pointer]:
+                  - link "spring/summer 2026 preview" [ref=e64]:
+                    - /url: /previews/springsummer2026
+            - listitem [ref=e65]:
+              - link "Fall/Winter 2026 Lookbook" [ref=e66] [cursor=pointer]:
+                - /url: /lookbook/46
+                - text: lookbook
+            - listitem [ref=e67]:
+              - link "news" [ref=e68] [cursor=pointer]:
+                - /url: /news
+          - generic [ref=e69]:
+            - list [ref=e70]:
+              - listitem [ref=e71]:
+                - link "random" [ref=e72] [cursor=pointer]:
+                  - /url: /random/mini-ramp
+              - listitem [ref=e73]:
+                - link "about" [ref=e74] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e75]:
+                - link "stores" [ref=e76] [cursor=pointer]:
+                  - /url: /stores
+            - list [ref=e77]:
+              - listitem [ref=e78]:
+                - link "f.a.q." [ref=e79] [cursor=pointer]:
+                  - /url: https://us.supreme.com/pages/faq
+              - listitem [ref=e80]:
+                - link "sizing" [ref=e81] [cursor=pointer]:
+                  - /url: https://us.supreme.com/pages/sizing
+              - listitem [ref=e82]:
+                - link "contact" [ref=e83] [cursor=pointer]:
+                  - /url: /contact
+            - list [ref=e84]:
+              - listitem [ref=e85]:
+                - link "terms" [ref=e86] [cursor=pointer]:
+                  - /url: https://us.supreme.com/pages/terms
+              - listitem [ref=e87]:
+                - link "privacy" [ref=e88] [cursor=pointer]:
+                  - /url: https://us.supreme.com/pages/privacy
+              - listitem [ref=e89]:
+                - link "accessibility" [ref=e90] [cursor=pointer]:
+                  - /url: https://us.supreme.com/pages/accessibility
+            - list [ref=e91]:
+              - listitem [ref=e92]:
+                - link "mailing list" [ref=e93] [cursor=pointer]:
+                  - /url: /mailinglist

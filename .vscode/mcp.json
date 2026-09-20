@@ -1,0 +1,26 @@
+{
+  "servers": {
+    "web-search": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "C:\\Users\\Administrator\\continue-demo\\web-search-mcp\\dist\\index.js"
+      ]
+    },
+    "make-custom-mcp": {
+      "type": "http",
+      "url": "https://us2.make.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:make.mcp.authorization}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "make.mcp.authorization",
+      "description": "Make.com MCP authorization token",
+      "password": true
+    }
+  ]
+}
