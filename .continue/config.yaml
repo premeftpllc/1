@@ -1,7 +1,7 @@
 models:
-  - name: Local Qwen Coder
+  - name: Local Qwen 3.5 9B
     provider: lmstudio
-    model: qwen2.5-coder-14b-instruct
+    model: qwen/qwen3.5-9b
     apiBase: http://127.0.0.1:1235
     roles:
       - chat
@@ -27,9 +27,9 @@ models:
 
 # Keep the local model as the default for coding and autocomplete when LM Studio is running.
 tabAutocompleteModel:
-  name: Local Qwen Coder
+  name: Local Qwen 3.5 9B
   provider: lmstudio
-  model: qwen2.5-coder-14b-instruct
+  model: qwen/qwen3.5-9b
   apiBase: http://127.0.0.1:1235
   roles:
     - autocomplete
