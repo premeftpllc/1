@@ -1,133 +1,69 @@
-# Recursive Globbing in pathlib.Path.glob (Python 3.14)
+# Recursive Globbing with `pathlib.Path` (Python 3.14)
 
-## Three Key Points About Recursive Globbing
-
-### 1. **Double-Asterisk Pattern (`**`) Enables Recursion**
-
-The `**` pattern is the core mechanism for recursive directory traversal in `pathlib.Path.glob()`. Without it, glob only searches the current directory:
+`Path.glob()` searches relative to a starting path. A pattern without `**` examines matches at its current directory level; `**` matches zero or more complete directory segments.
 
 ```python
 from pathlib import Path
 
-p = Path('.')
+source = Path("src")
 
-# Non-recursive: finds only files directly in '.'
-list(p.glob('*.py'))
-# Output: [PosixPath('test_pathlib.py'), PosixPath('setup.py')]
-
-# Recursive: finds .py files in ALL subdirectories at any depth
-list(p.glob('**/*.py'))
-# Output: [PosixPath('test_pathlib.py'), PosixPath('setup.py'),
-#          PosixPath('docs/conf.py'), PosixPath('build/lib/pathlib.py')]
+list(source.glob("*.py"))
+list(source.glob("**/*.py"))
+list(source.rglob("*.py"))
 ```
 
-### 2. **`glob()` vs `rglob()`: Two Ways to Recursively Match**
+The first call finds Python files directly in `src`. The latter two search `src` and every descendant directory.
 
-While both achieve recursion, they differ in pattern matching behavior:
+## `glob()` and `rglob()`
 
-| Method | Pattern Syntax | Behavior |
-| -------- | --------------- | ---------- |
-| `Path.glob(pattern)` | `'**/*'` | Matches files in starting directory + all subdirectories; returns results with full paths from starting point |
-| `Path.rglob(pattern)` | `'*'` | Equivalent to `glob('**/pattern')`; searches entire tree; more intuitive for recursive matching |
+For a relative pattern, `rglob()` is shorthand for prepending `**/` to a `glob()` pattern:
 
 ```python
-p = Path('.')
-
-# Both find same files but differ in pattern syntax:
-list(p.glob('**/*.py'))   # Uses ** pattern
-list(p.rglob('.py'))      # Uses rglob with * pattern (same result)
-
-# rglob is cleaner for pure recursive searches
-list(p.rglob('.txt'))  # Find all .txt files recursively
+source.glob("**/*.py")
+source.rglob("*.py")
 ```
 
-### 3. **Important: Pattern Must Not Be Followed by Separators**
-
-If the glob pattern ends with a path separator (`/` or `\`), recursive matching across directories is **disabled**:
+Use `glob()` when the pattern describes a directory structure:
 
 ```python
-p = Path('.')
-
-# Recursive: matches files in subdirectories
-list(p.glob('**/test_*'))
-# Matches: test.py, subdir/test.py, nested/deep/test.py
-
-# Non-recursive: pattern ends with separator, only matches current dir
-list(p.glob('**/*.py/'))  # This will NOT match any files!
-
-# Use rglob for cleaner recursive file matching
-list(p.rglob('.py'))      # Matches .py in all directories
+list(source.glob("**/plugins/*.py"))
 ```
 
-## Complete Examples
-
-### Finding Files Recursively
+Use `rglob()` when the goal is to search the entire tree for one filename pattern:
 
 ```python
-from pathlib import Path
-
-base = Path('src')
-
-# Find all Python files recursively
-python_files = list(base.glob('**/*.py'))
-
-# Find all test files (recursively)
-test_files = base.rglob('test_*.py')
-
-# Find configuration files in any depth level
-config_files = list(base.rglob('*.cfg'))
-
-# Find directories matching pattern
-subdirs = list(base.rglob('subdir*'))  # Note: may include files if not careful
+list(source.rglob("*.json"))
 ```
 
-### Filtering Results
+## Trailing Separators
+
+A trailing `/` restricts a pattern to directories. It does not disable recursion:
 
 ```python
-from pathlib import Path
-import re
-
-def get_source_files(directory):
-    """Get all .py source files, excluding tests"""
-    py_files = [f for f in directory.rglob('*.py')]
-    return [f for f in py_files if 'test' not in str(f) and '__pycache__' not in str(f)]
-
-def get_large_directories(root_path, size_threshold=1024):
-    """Find directories larger than threshold KB"""
-    large_dirs = []
-    for item in root_path.rglob('*'):
-        if item.is_dir() and item.stat().st_size > size_threshold:
-            large_dirs.append(item)
-    return large_dirs
+list(source.glob("**/cache/"))
+list(source.rglob("*/"))
 ```
 
-### Handling Hidden Files
+The first call finds directories named `cache` at any depth. A pattern such as `"**/*.py/"` matches directories whose names end in `.py`; it is not a file pattern.
 
-By default, `Path.glob()` does NOT match hidden files (starting with `.`). Use `rglob()` or explicit patterns:
+## Filtering Results
+
+Check the type of each match before processing it when a pattern can return both files and directories:
 
 ```python
-# Exclude hidden files by default
-list(p.glob('**/*.txt'))  # Won't match .hidden.txt
-
-# To include hidden files, use rglob which searches everything
-list(p.rglob('*.txt'))    # Will also find .hidden.txt if in search path
+python_files = [path for path in source.rglob("*.py") if path.is_file()]
+test_files = [path for path in source.rglob("test_*.py") if path.is_file()]
 ```
 
-## Best Practices
+`pathlib` does not treat dot-prefixed names as special, so matching patterns can include hidden files.
 
-1. **Use `rglob()` for pure recursive searches** - It's cleaner and more explicit
-2. **Validate results** - Check `is_file()` before processing
-3. **Sort for consistency** - Directory listings can vary across systems:
+## Performance
 
-   ```python
-   sorted_files = sorted(list(p.rglob('*.py')))
-   ```
+Recursive searches visit the directory tree, so their cost grows with the number of directories examined. `Path.glob()` and `Path.rglob()` do not guarantee cached results; cache results in application code when repeated scans are expensive.
 
-4. **Consider performance** - Deep directory trees can slow down glob operations
-5. **Handle symlinks** - By default, `Path` follows symlinks to directories
+Sort results when deterministic output matters:
 
-## Performance Notes
-
-- `glob()` and `rglob()` are efficient but scale with directory tree size
-- For very large projects, consider caching or incremental scanning
-- Memory usage depends on number of matches returned (all results in memory)
+```python
+for path in sorted(source.rglob("*.py")):
+    print(path)
+```
