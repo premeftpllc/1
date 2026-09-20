@@ -3,6 +3,7 @@ models:
     provider: lmstudio
     model: qwen/qwen3.5-9b
     apiBase: http://127.0.0.1:1235
+    contextLength: 131072
     roles:
       - chat
       - edit
