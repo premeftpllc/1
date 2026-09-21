@@ -1,0 +1,281 @@
+# Advanced Configuration with Agent Capabilities (2024-2025 Latest Features)
+# Copy this to .continue/config.yaml
+
+name: Advanced AI Developer Assistant
+version: 1.0.0
+schema: v1
+
+# ============================================================================
+# MODELS - Configure multiple models for different tasks
+# ============================================================================
+
+models:
+  # Primary coding model (local, free)
+  - name: codellama
+    provider: ollama
+    model: codellama:latest
+    roles:
+      - autocomplete
+      - chat
+      - edit
+
+  # High-quality reasoning for complex tasks
+  - name: o3-mini
+    provider: openai
+    model: gpt-4o-mini
+    apiKey: ${OPENAI_API_KEY}
+    roles:
+      - apply
+      - autocomplete
+      - edit
+
+  # Best for code reviews and explanations
+  - name: claude-code
+    provider: anthropic
+    model: claude-3-5-sonnet-20241022
+    apiKey: ${ANTHROPIC_API_KEY}
+    roles:
+      - apply
+      - autocomplete
+      - edit
+
+# ============================================================================
+# MCP SERVERS - Enable autonomous agent capabilities
+# ============================================================================
+
+mcpServers:
+  # Git operations for autonomous commit/push
+  git-mcp:
+    command: npx
+    args:
+      - -y
+      - @modelcontextprotocol/server-git
+
+  # Full filesystem access for reading/writing files
+  filesystem-observer:
+    command: npx
+    args:
+      - -y
+      - @modelcontextprotocol/server-filesystem
+      - ${workspaceRoot}
+
+  # Terminal access for running commands, npm/yarn/pip install, etc.
+  terminal-agent:
+    command: npx
+    args:
+      - -y
+      - @modelcontextprotocol/server-terminal
+
+  # Database operations (if you have databases in your project)
+  database-toolkit:
+    command: npx
+    args:
+      - -y
+      - @modelcontextprotocol/server-database
+
+  # Airtable - Inventory management
+  airtable:
+    type: stdio
+    command: node
+    args:
+      - "%APPDATA%/npm/node_modules/@airtable/mcp-server/dist/index.js"
+    env:
+      AIRTABLE_TOKEN: "${AIRTABLE_TOKEN}"
+    disabled: false
+
+  # Slack - Team communications and alerts
+  slack:
+    type: stdio
+    command: node
+    args:
+      - "%APPDATA%/npm/node_modules/slack-mcp-server/dist/index.js"
+    env:
+      SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"
+      SLACK_TEAM_ID: "${SLACK_TEAM_ID}"
+    disabled: false
+
+  # Gmail - Email management
+  gmail:
+    type: stdio
+    command: node
+    args:
+      - "%APPDATA%/npm/node_modules/@anthropic-ai/gmail-mcp-server/dist/index.js"
+    env:
+      GOOGLE_SERVICE_ACCOUNT_JSON: "${GOOGLE_SERVICE_ACCOUNT_JSON}"
+    disabled: false
+
+  # Make.com - Automation platform
+  make:
+    type: stdio
+    command: node
+    args:
+      - "%APPDATA%/npm/node_modules/make-custom-mcp/dist/index.js"
+    env:
+      MAKE_API_KEY: "${MAKE_API_KEY}"
+      MAKE_TEAM_ID: "${MAKE_TEAM_ID}"
+      MAKE_API_URL: "${MAKE_API_URL}"
+    disabled: false
+
+  # Notion - Release thesis documentation
+  notion:
+    type: stdio
+    command: node
+    args:
+      - "%APPDATA%/npm/node_modules/@notionhq/notion-mcp-server/dist/index.js"
+    env:
+      NOTION_TOKEN: "${NOTION_TOKEN}"
+      NOTION_VERSION: "${NOTION_VERSION}"
+    disabled: false
+
+# ============================================================================
+# SLASH COMMANDS - Quick access to AI-powered workflows
+# ============================================================================
+
+slashCommands:
+  # Project Understanding
+  - name: summarize-project
+    description: "Summarize the entire project structure and key components"
+    model: o3-mini
+    prompt: "Analyze this project comprehensively. Identify the main components, dependencies, architecture patterns, and how they work together. Provide a structured summary."
+
+  - name: tech-stack
+    description: "List all technologies used in this project"
+    model: codellama
+    prompt: "Identify and list all programming languages, frameworks, libraries, tools, and technologies used in this codebase. Include version information where available."
+
+  # Code Generation & Refactoring
+  - name: generate-implementation
+    description: "Generate implementation for the selected code"
+    model: claude-code
+    prompt: "Implement the functionality described here with best practices, error handling, and comprehensive documentation:\n\n{{context}}"
+
+  - name: rewrite-cleanly
+    description: "Rewrite this code to be cleaner and more maintainable"
+    model: o3-mini
+    prompt: "Refactor the following code to improve readability, maintainability, and follow modern best practices:\n\n{{context}}"
+
+  # Testing & Debugging
+  - name: create-test-suite
+    description: "Generate comprehensive test suite for selected code"
+    model: claude-code
+    prompt: "Write a complete test suite using modern testing frameworks. Include unit tests, integration tests, and edge cases:\n\n{{context}}"
+
+  - name: fix-bugs
+    description: "Find and fix bugs in the selected code"
+    model: o3-mini
+    prompt: "Analyze this code for bugs, logical errors, and edge cases. Fix all issues and explain what was wrong:\n\n{{context}}"
+
+  # Documentation
+  - name: write-api-docs
+    description: "Generate API documentation for selected functions"
+    model: claude-code
+    prompt: "Create comprehensive API documentation including usage examples, parameter descriptions, return values, and error handling:\n\n{{context}}"
+
+  # Security & Code Quality
+  - name: security-audit
+    description: "Perform security analysis on the code"
+    model: o3-mini
+    prompt: "Analyze this code for security vulnerabilities, common mistakes, and best practice violations. Provide specific remediation steps:\n\n{{context}}"
+
+  - name: optimize-performance
+    description: "Optimize code for better performance"
+    model: claude-code
+    prompt: "Identify performance bottlenecks and provide optimized versions with explanations of the improvements:\n\n{{context}}"
+
+# ============================================================================
+# CONTEXT CONFIGURATION
+# ============================================================================
+
+context:
+  # Always include currently open files
+  includeOpenFiles: true
+
+  # Include recently modified files (last 30 minutes)
+  includeRecentlyEdited: true
+  recentlyEditedMinutes: 30
+
+  # Maximum context size for complex tasks
+  maxChars: 50000
+
+# ============================================================================
+# AUTOCOMPLETE SETTINGS
+# ============================================================================
+
+autocomplete:
+  enable: true
+
+  # Auto-trigger suggestions after specific patterns
+  triggers:
+    functionCall: true
+    keyword: true
+    dot: true
+    colon: false
+
+  # Show up to 5 completions at once
+  maxCompletions: 5
+
+# ============================================================================
+# CHAT CONFIGURATION
+# ============================================================================
+
+chat:
+  systemPrompt: |
+    You are an expert AI developer assistant. You help developers write code, debug issues, understand complex systems, and improve their workflow. Be helpful, thorough, and always explain your reasoning when it might not be obvious to the user.
+
+  markdown: true
+  codeBlockStyle: fenced
+
+# ============================================================================
+# EDIT CONFIGURATION (for inline modifications)
+# ============================================================================
+
+edit:
+  showDiff: true
+  allowMultiFile: true
+  requestConfirmation: true
+  maxFiles: 10
+
+# ============================================================================
+# APPLY CONFIGURATION (for autonomous changes)
+# ============================================================================
+
+apply:
+  maxFiles: 5
+  dryRun: false
+  showSummary: true
+
+# ============================================================================
+# CUSTOM PROMPTS
+# ============================================================================
+
+customPrompts:
+  - name: code-review
+    description: "Review selected code for quality, bugs, and best practices"
+    model: o3-mini
+    prompt: |
+      Review this code thoroughly. Check for:
+      - Code quality and maintainability
+      - Potential bugs and edge cases
+      - Security vulnerabilities
+      - Performance issues
+      - Missing tests or error handling
+
+      Provide specific, actionable feedback with examples.
+
+  - name: add-gitignore
+    description: "Generate .gitignore for this project"
+    model: codellama
+    prompt: |
+      Create a comprehensive .gitignore file for this project type. Include entries for:
+      - Build artifacts and temporary files
+      - Environment variables and secrets
+      - IDE and editor files
+      - Dependencies that should be versioned
+
+      Make it specific to the detected tech stack.
+
+  - name: convert-typescript
+    description: "Convert between TypeScript and JavaScript"
+    model: codellama
+    prompt: |
+      {{convert_to_javascript or 'Convert to TypeScript'}} the following code while maintaining all functionality:\n\n{{context}}
