@@ -76,9 +76,10 @@ mcpServers:
   # Airtable - Inventory management
   airtable:
     type: stdio
-    command: node
+    command: npx
     args:
-      - "%APPDATA%/npm/node_modules/@airtable/mcp-server/dist/index.js"
+      - --yes
+      - "@airtable/mcp-cli"
     env:
       AIRTABLE_TOKEN: "${AIRTABLE_TOKEN}"
     disabled: false
@@ -86,9 +87,10 @@ mcpServers:
   # Slack - Team communications and alerts
   slack:
     type: stdio
-    command: node
+    command: npx
     args:
-      - "%APPDATA%/npm/node_modules/slack-mcp-server/dist/index.js"
+      - --yes
+      - slack-mcp-server
     env:
       SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"
       SLACK_TEAM_ID: "${SLACK_TEAM_ID}"
@@ -97,9 +99,10 @@ mcpServers:
   # Gmail - Email management
   gmail:
     type: stdio
-    command: node
+    command: npx
     args:
-      - "%APPDATA%/npm/node_modules/@anthropic-ai/gmail-mcp-server/dist/index.js"
+      - --yes
+      - "@klodr/gmail-mcp"
     env:
       GOOGLE_SERVICE_ACCOUNT_JSON: "${GOOGLE_SERVICE_ACCOUNT_JSON}"
     disabled: false
@@ -107,9 +110,10 @@ mcpServers:
   # Make.com - Automation platform
   make:
     type: stdio
-    command: node
+    command: npx
     args:
-      - "%APPDATA%/npm/node_modules/make-custom-mcp/dist/index.js"
+      - --yes
+      - make-custom-mcp
     env:
       MAKE_API_KEY: "${MAKE_API_KEY}"
       MAKE_TEAM_ID: "${MAKE_TEAM_ID}"
@@ -119,9 +123,10 @@ mcpServers:
   # Notion - Release thesis documentation
   notion:
     type: stdio
-    command: node
+    command: npx
     args:
-      - "%APPDATA%/npm/node_modules/@notionhq/notion-mcp-server/dist/index.js"
+      - --yes
+      - "@notionhq/notion-mcp-server"
     env:
       NOTION_TOKEN: "${NOTION_TOKEN}"
       NOTION_VERSION: "${NOTION_VERSION}"
