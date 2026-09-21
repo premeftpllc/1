@@ -1,0 +1,76 @@
+# Continue MCP Servers Configuration
+# Add these to your Continue config.yaml file at: C:\Users\Administrator\continue-demo\.continue\config.yaml
+# Under the 'mcpServers:' section
+
+mcpServers:
+  # ===== AIRTABLE MCP =====
+  airtable:
+    type: stdio
+    command: node
+    args:
+      - "%APPDATA%/npm/node_modules/@airtable/mcp-server/dist/index.js"
+    env:
+      AIRTABLE_TOKEN: "${AIRTABLE_TOKEN}"
+    disabled: false
+    tools:
+      - "*"
+
+  # ===== SLACK MCP =====
+  slack:
+    type: stdio
+    command: node
+    args:
+      - "%APPDATA%/npm/node_modules/slack-mcp-server/dist/index.js"
+    env:
+      SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"
+      SLACK_TEAM_ID: "${SLACK_TEAM_ID}"
+    disabled: false
+    tools:
+      - "*"
+
+  # ===== GMAIL MCP =====
+  gmail:
+    type: stdio
+    command: node
+    args:
+      - "%APPDATA%/npm/node_modules/@anthropic-ai/gmail-mcp-server/dist/index.js"
+    env:
+      GOOGLE_SERVICE_ACCOUNT_JSON: "${GOOGLE_SERVICE_ACCOUNT_JSON}"
+    disabled: false
+    tools:
+      - "*"
+
+  # ===== EXISTING SERVERS (keep these) =====
+  make:
+    type: stdio
+    command: node
+    args:
+      - "%APPDATA%/npm/node_modules/make-custom-mcp/dist/index.js"
+    env:
+      MAKE_API_KEY: "${MAKE_API_KEY}"
+      MAKE_TEAM_ID: "${MAKE_TEAM_ID}"
+      MAKE_API_URL: "${MAKE_API_URL}"
+    disabled: false
+    tools:
+      - "*"
+
+  notion:
+    type: stdio
+    command: node
+    args:
+      - "%APPDATA%/npm/node_modules/@notionhq/notion-mcp-server/dist/index.js"
+    env:
+      NOTION_TOKEN: "${NOTION_TOKEN}"
+      NOTION_VERSION: "${NOTION_VERSION}"
+    disabled: false
+    tools:
+      - "*"
+
+  web-search:
+    type: stdio
+    command: node
+    args:
+      - "%APPDATA%/npm/node_modules/web-search-mcp-server/dist/index.js"
+    disabled: false
+    tools:
+      - "*"
