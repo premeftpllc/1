@@ -1,0 +1,377 @@
+{
+  "workflows": [
+    {
+      "id": "phase1_daily_monitor",
+      "name": "StockX Below-Retail Monitor - Phase 1",
+      "description": "Daily monitoring of StockX below-retail items with margin filtering and Slack alerts",
+      "status": "production",
+      "created": "2026-09-22",
+      "category": "Phase 1",
+      "trigger": {
+        "type": "scheduler",
+        "frequency": "daily",
+        "time": "10:00",
+        "timezone": "America/New_York"
+      },
+      "modules": [
+        {
+          "order": 1,
+          "id": "http_stockx_products",
+          "name": "StockX API - Fetch Below Retail Products",
+          "type": "http",
+          "method": "GET",
+          "url": "https://api.stockx.com/products",
+          "headers": {
+            "Authorization": "Bearer {{env.STOCKX_API_KEY}}",
+            "Content-Type": "application/json",
+            "User-Agent": "PremeFTP-Bot/1.0"
+          },
+          "query_params": {
+            "filter[below_retail]": "true",
+            "filter[category]": "sneakers,accessories,collectibles",
+            "limit": "50",
+            "sort": "-volume_24h"
+          },
+          "auth": "bearer_token",
+          "rate_limit_handling": "backoff"
+        },
+        {
+          "order": 2,
+          "id": "data_transform",
+          "name": "Transform & Calculate Margins",
+          "type": "javascript",
+          "code": "const items = collection.map(item => {\n  const retailPrice = item.retail_price || 0;\n  const currentPrice = item.lowest_ask || 0;\n  const discountPercent = ((retailPrice - currentPrice) / retailPrice * 100).toFixed(1);\n  \n  // Fee calculation: 13% StockX + 13% Shopify + 4% shipping\n  const totalFees = currentPrice * 0.30;\n  const grossProfit = currentPrice - retailPrice;\n  const netProfit = grossProfit - totalFees;\n  \n  return {\n    sku: item.uuid,\n    name: item.title,\n    category: item.category,\n    retail_price: retailPrice.toFixed(2),\n    current_price: currentPrice.toFixed(2),\n    discount_percent: discountPercent,\n    gross_profit: grossProfit.toFixed(2),\n    estimated_fees: totalFees.toFixed(2),\n    net_profit: netProfit.toFixed(2),\n    url: `https://stockx.com/search?s=${item.slug}`,\n    volume_24h: item.volume_24h || 0,\n    timestamp: new Date().toISOString()\n  };\n});\n\nreturn {\n  all_items: items,\n  deals: items.filter(item => parseFloat(item.net_profit) >= 50),\n  top_5_deals: items.filter(item => parseFloat(item.net_profit) >= 50).sort((a,b) => parseFloat(b.net_profit) - parseFloat(a.net_profit)).slice(0, 5),\n  total_deals_found: items.filter(item => parseFloat(item.net_profit) >= 50).length,\n  total_potential_profit: items.filter(item => parseFloat(item.net_profit) >= 50).reduce((sum, item) => sum + parseFloat(item.net_profit), 0).toFixed(2)\n};"
+        },
+        {
+          "order": 3,
+          "id": "slack_alert_high_margin",
+          "name": "Slack Alert - High Margin Deals (>$75)",
+          "type": "slack",
+          "action": "sendMessage",
+          "channel": "#arbitrage-deals",
+          "condition": "data.net_profit >= 75",
+          "message_template": "🚨 **ARBITRAGE ALERT** 🚨\n*Item:* {{data.name}}\n*Category:* {{data.category}}\n\n💰 *Pricing:*\nStockX Price: ${{data.current_price}}\nRetail Price: ${{data.retail_price}}\nDiscount: {{data.discount_percent}}%\n\n📊 *Profit Breakdown:*\nGross Profit: ${{data.gross_profit}}\nEstimated Fees (30%): -${{data.estimated_fees}}\n✅ *Net Profit: ${{data.net_profit}}*\n\n📈 Volume 24h: {{data.volume_24h}} units\n🔗 <{{data.url}}|View on StockX>\n\nTimestamp: {{data.timestamp}}",
+          "thread_ts": "parent",
+          "mrkdwn": true
+        },
+        {
+          "order": 4,
+          "id": "gsheets_append_all_deals",
+          "name": "Google Sheets - Log All Deals",
+          "type": "google_sheets",
+          "action": "append_row",
+          "spreadsheet_id": "{{env.GSHEET_STOCKX_LOG_ID}}",
+          "sheet_name": "StockX_Daily_Log",
+          "values": [
+            "{{data.timestamp}}",
+            "{{data.sku}}",
+            "{{data.name}}",
+            "{{data.category}}",
+            "{{data.current_price}}",
+            "{{data.retail_price}}",
+            "{{data.discount_percent}}",
+            "{{data.net_profit}}",
+            "{{data.url}}",
+            "Pending"
+          ],
+          "append_mode": "append_rows"
+        },
+        {
+          "order": 5,
+          "id": "daily_summary",
+          "name": "Daily Summary at 4 PM",
+          "type": "scheduler",
+          "condition": "time_is_4pm_et",
+          "frequency": "daily",
+          "time": "16:00",
+          "timezone": "America/New_York",
+          "action": "slack",
+          "action_data": {
+            "channel": "#arbitrage-summary",
+            "message_template": "📊 **Daily Arbitrage Summary** 📊\n*Date:* {{date}}\n\n📈 *Results:*\nTotal Deals Found: {{data.total_deals_found}}\nTotal Potential Profit: ${{data.total_potential_profit}}\n\n🏆 *Top 5 Deals:*\n{{#each data.top_5_deals}}\n{{@index+1}}. *{{this.name}}* - ${{this.net_profit}}\n{{/each}}\n\n💡 *Action Items:*\n• Review alerts in #arbitrage-deals\n• Source profitable items from StockX\n• Update PREMEFTP_ARBITRAGE_LOG.md\n\n⏰ Weekend Setup Check Reminder (Friday only)",
+            "mrkdwn": true
+          }
+        }
+      ],
+      "error_handling": {
+        "on_api_error": "continue_with_empty",
+        "on_transform_error": "log_and_skip",
+        "max_retries": 3,
+        "retry_delay": 60
+      },
+      "notifications": {
+        "on_complete": "slack",
+        "channel": "#automation-status"
+      }
+    },
+    {
+      "id": "phase2_spread_detector",
+      "name": "Cross-Platform Spread Detection - Phase 2",
+      "description": "Real-time comparison of StockX vs GOAT prices; alerts on $100+ spreads",
+      "status": "production",
+      "created": "2026-09-22",
+      "category": "Phase 2",
+      "trigger": {
+        "type": "scheduler",
+        "frequency": "every_30_minutes"
+      },
+      "modules": [
+        {
+          "order": 1,
+          "id": "fetch_watched_products",
+          "name": "Google Sheets - Get Watched Products",
+          "type": "google_sheets",
+          "action": "get_values",
+          "spreadsheet_id": "{{env.GSHEET_TRACKING_ID}}",
+          "sheet_name": "watched_products",
+          "output": "array_of_objects"
+        },
+        {
+          "order": 2,
+          "id": "loop_watched_products",
+          "name": "Loop - For Each Watched Product",
+          "type": "iterator",
+          "collection": "{{modules.fetch_watched_products.data}}"
+        },
+        {
+          "order": 3,
+          "id": "stockx_lookup",
+          "name": "StockX - Lookup Current Price",
+          "type": "http",
+          "method": "GET",
+          "url": "https://api.stockx.com/products/{{item.sku}}",
+          "headers": {
+            "Authorization": "Bearer {{env.STOCKX_API_KEY}}",
+            "Content-Type": "application/json"
+          },
+          "output_mapping": {
+            "stockx_price": "lowest_ask",
+            "stockx_volume": "volume_24h"
+          }
+        },
+        {
+          "order": 4,
+          "id": "goat_lookup",
+          "name": "GOAT - Lookup Current Price",
+          "type": "http",
+          "method": "GET",
+          "url": "https://api.goatapp.it/api/v1/products/{{item.sku}}",
+          "headers": {
+            "Authorization": "Bearer {{env.GOAT_API_KEY}}",
+            "Accept": "application/json"
+          },
+          "output_mapping": {
+            "goat_price": "lowest_ask",
+            "goat_volume": "volume_24h"
+          }
+        },
+        {
+          "order": 5,
+          "id": "spread_calculator",
+          "name": "Calculate Spread & Profit",
+          "type": "javascript",
+          "code": "const stockx_price = parseFloat(modules.stockx_lookup.stockx_price);\nconst goat_price = parseFloat(modules.goat_lookup.goat_price);\nconst raw_spread = goat_price - stockx_price;\n\n// Fee calculation\nconst stockx_fee = stockx_price * 0.13;\nconst goat_fee = goat_price * 0.13;\nconst shipping = 15; // Flat $15 for logistics\nconst total_fees = stockx_fee + goat_fee + shipping;\n\nconst net_arbitrage = raw_spread - total_fees;\n\nreturn {\n  sku: item.sku,\n  product_name: item.name,\n  stockx_price: stockx_price.toFixed(2),\n  goat_price: goat_price.toFixed(2),\n  raw_spread: raw_spread.toFixed(2),\n  stockx_fee: stockx_fee.toFixed(2),\n  goat_fee: goat_fee.toFixed(2),\n  shipping_estimate: shipping.toFixed(2),\n  total_fees: total_fees.toFixed(2),\n  net_arbitrage: net_arbitrage.toFixed(2),\n  is_profitable: net_arbitrage >= 100,\n  timestamp: new Date().toISOString()\n};"
+        },
+        {
+          "order": 6,
+          "id": "condition_spread_check",
+          "name": "Condition - Spread >= $100?",
+          "type": "condition",
+          "condition": "modules.spread_calculator.net_arbitrage >= 100",
+          "true_modules": [7, 8],
+          "false_modules": [9]
+        },
+        {
+          "order": 7,
+          "id": "slack_alert_spread",
+          "name": "Slack Alert - Profitable Spread",
+          "type": "slack",
+          "action": "sendMessage",
+          "channel": "#arbitrage-spreads",
+          "message_template": "💰 **SPREAD DETECTED** 💰\n*Product:* {{data.product_name}}\n\n💹 *Price Comparison:*\nStockX: ${{data.stockx_price}}\nGOAT: ${{data.goat_price}}\nRaw Spread: ${{data.raw_spread}}\n\n📊 *Fee Breakdown:*\nStockX Fee (13%): -${{data.stockx_fee}}\nGOAT Fee (13%): -${{data.goat_fee}}\nShipping/Insurance: -${{data.shipping_estimate}}\nTotal Fees: -${{data.total_fees}}\n\n✅ *NET ARBITRAGE: ${{data.net_arbitrage}}*\n\n⏱️ Window: ~2-4 hours (spreads close fast)\nAction: Source from StockX → Relist on GOAT\n\nTimestamp: {{data.timestamp}}"
+        },
+        {
+          "order": 8,
+          "id": "gsheets_log_spread",
+          "name": "Google Sheets - Log Profitable Spread",
+          "type": "google_sheets",
+          "action": "append_row",
+          "spreadsheet_id": "{{env.GSHEET_TRACKING_ID}}",
+          "sheet_name": "arbitrage_spreads_log",
+          "values": [
+            "{{data.timestamp}}",
+            "{{data.sku}}",
+            "{{data.product_name}}",
+            "{{data.stockx_price}}",
+            "{{data.goat_price}}",
+            "{{data.raw_spread}}",
+            "{{data.total_fees}}",
+            "{{data.net_arbitrage}}",
+            "YES",
+            "Pending Capture"
+          ]
+        },
+        {
+          "order": 9,
+          "id": "gsheets_log_skip",
+          "name": "Google Sheets - Log Skipped (< $100)",
+          "type": "google_sheets",
+          "action": "append_row",
+          "spreadsheet_id": "{{env.GSHEET_TRACKING_ID}}",
+          "sheet_name": "arbitrage_spreads_log",
+          "values": [
+            "{{data.timestamp}}",
+            "{{data.sku}}",
+            "{{data.product_name}}",
+            "{{data.stockx_price}}",
+            "{{data.goat_price}}",
+            "{{data.raw_spread}}",
+            "{{data.total_fees}}",
+            "{{data.net_arbitrage}}",
+            "NO",
+            "Below Threshold"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase3_tcg_monitor",
+      "name": "Pokémon TCG Price Monitor & Liquidation Alert - Phase 3",
+      "description": "Monitor sealed product prices and detect liquidation windows for trading cards",
+      "status": "production",
+      "created": "2026-09-22",
+      "category": "Phase 3",
+      "trigger": {
+        "type": "scheduler",
+        "frequency": "twice_daily",
+        "times": ["10:00", "18:00"],
+        "timezone": "America/New_York"
+      },
+      "modules": [
+        {
+          "order": 1,
+          "id": "tcg_api_fetch",
+          "name": "TCG API - Fetch Sealed Products",
+          "type": "http",
+          "method": "GET",
+          "url": "https://api.pokellectdex.com/sealed/booster-boxes",
+          "headers": {
+            "Authorization": "Bearer {{env.TCG_API_KEY}}",
+            "Accept": "application/json"
+          },
+          "query_params": {
+            "sort": "-volume_24h",
+            "limit": "20"
+          }
+        },
+        {
+          "order": 2,
+          "id": "transform_tcg_data",
+          "name": "Transform TCG Data",
+          "type": "javascript",
+          "code": "const products = collection.map(product => {\n  const current_price = parseFloat(product.price);\n  const price_7d_ago = parseFloat(product.price_7d_ago) || current_price;\n  const change_pct = ((current_price - price_7d_ago) / price_7d_ago * 100).toFixed(1);\n  \n  let alert_type = 'NONE';\n  let alert_triggered = false;\n  \n  if (change_pct < -10) {\n    alert_type = 'PRICE_DROP';\n    alert_triggered = true;\n  } else if (change_pct > 15 && product.volume_24h > 50) {\n    alert_type = 'SELLING_OPPORTUNITY';\n    alert_triggered = true;\n  }\n  \n  return {\n    id: product.id,\n    name: product.name,\n    set: product.set_name,\n    condition: product.condition,\n    price: current_price.toFixed(2),\n    price_7d: price_7d_ago.toFixed(2),\n    change_pct: change_pct,\n    volume_24h: product.volume_24h,\n    alert_type: alert_type,\n    alert_triggered: alert_triggered,\n    timestamp: new Date().toISOString()\n  };\n});\n\nreturn {\n  all_products: products,\n  alerts_triggered: products.filter(p => p.alert_triggered),\n  alert_count: products.filter(p => p.alert_triggered).length\n};"
+        },
+        {
+          "order": 3,
+          "id": "condition_alert_check",
+          "name": "Condition - Any Alerts?",
+          "type": "condition",
+          "condition": "modules.transform_tcg_data.alert_count > 0",
+          "true_modules": [4, 5],
+          "false_modules": [6]
+        },
+        {
+          "order": 4,
+          "id": "loop_alerts",
+          "name": "Loop - For Each Alert",
+          "type": "iterator",
+          "collection": "{{modules.transform_tcg_data.alerts_triggered}}"
+        },
+        {
+          "order": 5,
+          "id": "slack_tcg_alert",
+          "name": "Slack Alert - TCG Liquidation Window",
+          "type": "slack",
+          "action": "sendMessage",
+          "channel": "#tcg-arbitrage",
+          "message_template": "🚨 **TCG LIQUIDATION WINDOW** 🚨\n*Product:* {{data.name}}\n*Set:* {{data.set}}\n\n💰 *Price Action:*\nCurrent: ${{data.price}}\n7-Day Ago: ${{data.price_7d}}\nChange: {{data.change_pct}}% {{#if data.change_pct < 0}}↓{{else}}↑{{/if}}\n\n📊 *Volume:* {{data.volume_24h}} units\n💡 *Alert Type:* {{data.alert_type}}\n\n⏱️ Window: 48-72 hours\nTimestamp: {{data.timestamp}}"
+        },
+        {
+          "order": 6,
+          "id": "gsheets_tcg_log",
+          "name": "Google Sheets - TCG Log",
+          "type": "google_sheets",
+          "action": "append_row",
+          "spreadsheet_id": "{{env.GSHEET_TCG_LOG_ID}}",
+          "sheet_name": "tcg_sealed_product_log",
+          "values": [
+            "{{data.timestamp}}",
+            "{{data.set}}",
+            "{{data.name}}",
+            "{{data.condition}}",
+            "{{data.price}}",
+            "{{data.price_7d}}",
+            "{{data.change_pct}}",
+            "{{data.volume_24h}}",
+            "{{data.alert_type}}",
+            ""
+          ]
+        }
+      ]
+    }
+  ],
+  "environment_variables": {
+    "STOCKX_API_KEY": {
+      "description": "StockX API authentication token",
+      "source": "https://developer.stockx.com",
+      "required": true
+    },
+    "GOAT_API_KEY": {
+      "description": "GOAT API authentication token",
+      "source": "dev@goat.com",
+      "required": false,
+      "fallback": "web_scraping"
+    },
+    "TCG_API_KEY": {
+      "description": "TCGPlayer or PokellectDex API key",
+      "source": "tcgplayer.com/sellers",
+      "required": false
+    },
+    "GSHEET_STOCKX_LOG_ID": {
+      "description": "Google Sheets ID for StockX daily log",
+      "required": true
+    },
+    "GSHEET_TRACKING_ID": {
+      "description": "Google Sheets ID for spread tracking",
+      "required": true
+    },
+    "GSHEET_TCG_LOG_ID": {
+      "description": "Google Sheets ID for TCG log",
+      "required": false
+    },
+    "SLACK_WEBHOOK_DEALS": {
+      "description": "Slack webhook URL for arbitrage deals",
+      "required": true
+    },
+    "SLACK_WEBHOOK_SPREADS": {
+      "description": "Slack webhook URL for spread alerts",
+      "required": false
+    },
+    "SLACK_WEBHOOK_TCG": {
+      "description": "Slack webhook URL for TCG alerts",
+      "required": false
+    }
+  },
+  "configuration_guide": {
+    "setup_time_hours": 1,
+    "difficulty": "intermediate",
+    "dependencies": ["make.com_account", "slack_workspace", "google_sheets", "api_keys"],
+    "testing_steps": [
+      "Test StockX API connection",
+      "Run workflow manually",
+      "Verify Slack alerts post",
+      "Check Google Sheets logging",
+      "Monitor 48 hours for real data"
+    ]
+  }
+}
