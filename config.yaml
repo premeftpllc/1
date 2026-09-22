@@ -1,11 +1,11 @@
-name: Local Qwen LM Studio Config
+name: Nemotron-3-Nano-4B Master Config (Remote LM Studio 192.168.1.25)
 version: 1.0.0
 schema: v1
 models:
   - name: nemotron-3-nano-4b
     provider: lmstudio
     model: nvidia/nemotron-3-nano-4b
-    apiBase: http://127.0.0.1:1235/v1
+    apiBase: http://192.168.1.25:1235/v1
     roles:
       - chat
       - autocomplete
@@ -25,16 +25,13 @@ models:
   - name: Nomic Embed Text v1.5
     provider: lmstudio
     model: text-embedding-nomic-embed-text-v1.5
-    apiBase: http://127.0.0.1:1235/v1
-    roles:
-      - embed
+    apiBase: http://192.168.1.25:1235/v1
     requestOptions:
       timeout: 300000
-  - name: Autodetect
-    provider: lmstudio
-    model: AUTODETECT
-    apiBase: http://127.0.0.1:1235/v1
+# MCP Servers: All configured, credentials loaded from .env.local
+# Add your tokens/keys to .env.local - they're referenced here via $ENV_VAR syntax
 mcpServers:
+  # Essential: Always running
   - name: web-search
     command: node
     args:
@@ -43,48 +40,90 @@ mcpServers:
       BROWSER_HEADLESS: "true"
       BROWSER_TYPES: chromium
       MAX_BROWSERS: "1"
-      DEFAULT_TIMEOUT: "10000"
-      MAX_CONTENT_LENGTH: "10000"
+      DEFAULT_TIMEOUT: "30000"
+      MAX_CONTENT_LENGTH: "50000"
+
   - name: clock
     command: node
     args:
       - C:/Users/Administrator/.continue/mcp-clock.mjs
+
+  # Automation & Workflows
   - name: make-custom-mcp
     command: node
     args:
       - C:/Users/Administrator/.continue/mcp-make-bridge.js
+    env:
+      MAKE_API_KEY: ${MAKE_API_KEY}
+      MAKE_TEAM_ID: ${MAKE_TEAM_ID}
+      MAKE_MCP_AUTHORIZATION: ${MAKE_MCP_AUTHORIZATION}
+
+  # Knowledge & Data
   - name: notion
     command: node
     args:
       - C:/Users/Administrator/.continue/mcp-notion-launcher.js
+    env:
+      NOTION_TOKEN: ${NOTION_TOKEN}
+
   - name: airtable
     command: node
     args:
       - C:/Users/Administrator/.continue/mcp-airtable-launcher.js
+    env:
+      AIRTABLE_TOKEN: ${AIRTABLE_TOKEN}
+
+  # Communication
   - name: slack
     command: node
     args:
       - C:/Users/Administrator/.continue/mcp-slack-launcher.js
+    env:
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
+
+  # Google Workspace
   - name: gmail
     command: node
     args:
       - C:/Users/Administrator/.continue/mcp-gmail-launcher.js
+    env:
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+
   - name: google-calendar
     command: node
     args:
       - C:/Users/Administrator/.continue/mcp-calendar-launcher.js
+    env:
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+
   - name: google-drive
     command: node
     args:
       - C:/Users/Administrator/.continue/mcp-drive-launcher.js
+    env:
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+
+  # E-Commerce & Integrations
   - name: shopify
     command: node
     args:
       - C:/Users/Administrator/.continue/mcp-shopify-launcher.js
+    env:
+      SHOPIFY_ACCESS_TOKEN: ${SHOPIFY_ACCESS_TOKEN}
+      SHOPIFY_SHOP_URL: ${SHOPIFY_SHOP_URL}
+
   - name: zapier
     command: node
     args:
       - C:/Users/Administrator/.continue/mcp-zapier-bridge.mjs
+    env:
+      ZAPIER_MCP_URL: ${ZAPIER_MCP_URL}
 
 # Model selection for each role/field
 modelRoles:
@@ -103,21 +142,34 @@ modelRoles:
 settings:
   autocomplete:
     enabled: true
-    maxTokens: 512
+    maxTokens: 2048
     useCache: true
+    temperature: 0.3
 
   edit:
     showDiff: true
     allowMultiFile: true
     requestConfirmation: true
     maxFiles: 10
+    temperature: 0.3
 
   apply:
     maxFiles: 5
     dryRun: false
     showSummary: true
+    temperature: 0.2
 
   chat:
-    systemPrompt: "You are an expert AI developer assistant. Help developers write code, debug issues, understand complex systems, and improve their workflow."
+    systemPrompt: "You are an expert AI developer assistant with access to live MCP tools. Help developers write code, debug issues, understand complex systems, and improve their workflow."
     markdown: true
     codeBlockStyle: fenced
+    temperature: 0.3
+
+  refactor:
+    temperature: 0.3
+
+  explain:
+    temperature: 0.3
+
+  docs:
+    temperature: 0.3
