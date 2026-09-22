@@ -1,0 +1,92 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "PremeOS: Check local AI",
+      "type": "process",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/scripts/workspace.py",
+        "health"
+      ],
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "PremeOS: Test local chat",
+      "type": "process",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/scripts/workspace.py",
+        "chat"
+      ],
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "PremeOS: Test embeddings",
+      "type": "process",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/scripts/workspace.py",
+        "embed"
+      ],
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "PremeOS: Validate JSON",
+      "type": "process",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/scripts/workspace.py",
+        "validate"
+      ],
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "PremeOS: Start LM Studio server",
+      "type": "process",
+      "command": "${env:HOME}/.lmstudio/bin/lms",
+      "args": [
+        "server",
+        "start",
+        "--port",
+        "1235"
+      ],
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "PremeOS: Load local model (131K)",
+      "type": "process",
+      "command": "${env:HOME}/.lmstudio/bin/lms",
+      "args": [
+        "load",
+        "google/gemma-4-e2b",
+        "--context-length",
+        "131072",
+        "--parallel",
+        "4",
+        "--identifier",
+        "google/gemma-4-e2b",
+        "--yes"
+      ],
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    }
+  ]
+}

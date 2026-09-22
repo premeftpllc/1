@@ -1,0 +1,28 @@
+{
+  "window.title": "PremeOS \u2014 ${activeEditorShort}${separator}${appName}",
+  "editor.wordWrap": "on",
+  "editor.minimap.enabled": false,
+  "editor.rulers": [
+    100
+  ],
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "files.insertFinalNewline": true,
+  "files.autoSave": "off",
+  "explorer.sortOrder": "type",
+  "breadcrumbs.enabled": true,
+  "workbench.editor.enablePreview": false,
+  "diffEditor.ignoreTrimWhitespace": false,
+  "git.autofetch": false,
+  "search.exclude": {
+    "**/.git": true,
+    "**/.venv": true,
+    "**/node_modules": true,
+    "**/.local": true
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.venv/**": true,
+    "**/node_modules/**": true
+  }
+}
