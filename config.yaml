@@ -18,8 +18,8 @@ models:
     capabilities:
       - tool_use
     defaultCompletionOptions:
-      contextLength: 4096
-      maxTokens: 2048
+      contextLength: 500000
+      maxTokens: 250000
     requestOptions:
       timeout: 300000
   - name: Nomic Embed Text v1.5
