@@ -39,23 +39,23 @@ function getPersistentWindowsEnvironmentVariable(name) {
 }
 
 const envLocal = loadEnvLocal();
-const serviceAccount =
-  process.env.GOOGLE_SERVICE_ACCOUNT_JSON ??
-  envLocal.GOOGLE_SERVICE_ACCOUNT_JSON ??
-  getPersistentWindowsEnvironmentVariable("GOOGLE_SERVICE_ACCOUNT_JSON");
+const token =
+  process.env.AIRTABLE_TOKEN ??
+  envLocal.AIRTABLE_TOKEN ??
+  getPersistentWindowsEnvironmentVariable("AIRTABLE_TOKEN");
 
-if (!serviceAccount) {
-  throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is not available to the Gmail MCP launcher.");
+if (!token) {
+  throw new Error("AIRTABLE_TOKEN is not available to the Airtable MCP launcher.");
 }
 
 const command = process.platform === "win32" ? process.env.ComSpec || "cmd.exe" : "npx";
 const args =
   process.platform === "win32"
-    ? ["/d", "/s", "/c", "npx.cmd -y @klodr/gmail-mcp"]
-    : ["-y", "@klodr/gmail-mcp"];
+    ? ["/d", "/s", "/c", "npx.cmd -y @airtable/mcp-cli"]
+    : ["-y", "@airtable/mcp-cli"];
 
 const child = spawn(command, args, {
-  env: { ...process.env, GOOGLE_SERVICE_ACCOUNT_JSON: serviceAccount },
+  env: { ...process.env, AIRTABLE_TOKEN: token },
   stdio: "inherit",
   windowsHide: true,
 });

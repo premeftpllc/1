@@ -39,23 +39,32 @@ function getPersistentWindowsEnvironmentVariable(name) {
 }
 
 const envLocal = loadEnvLocal();
-const serviceAccount =
-  process.env.GOOGLE_SERVICE_ACCOUNT_JSON ??
-  envLocal.GOOGLE_SERVICE_ACCOUNT_JSON ??
-  getPersistentWindowsEnvironmentVariable("GOOGLE_SERVICE_ACCOUNT_JSON");
+const botToken =
+  process.env.SLACK_BOT_TOKEN ??
+  envLocal.SLACK_BOT_TOKEN ??
+  getPersistentWindowsEnvironmentVariable("SLACK_BOT_TOKEN");
 
-if (!serviceAccount) {
-  throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is not available to the Gmail MCP launcher.");
+const teamId =
+  process.env.SLACK_TEAM_ID ??
+  envLocal.SLACK_TEAM_ID ??
+  getPersistentWindowsEnvironmentVariable("SLACK_TEAM_ID");
+
+if (!botToken) {
+  throw new Error("SLACK_BOT_TOKEN is not available to the Slack MCP launcher.");
+}
+
+if (!teamId) {
+  throw new Error("SLACK_TEAM_ID is not available to the Slack MCP launcher.");
 }
 
 const command = process.platform === "win32" ? process.env.ComSpec || "cmd.exe" : "npx";
 const args =
   process.platform === "win32"
-    ? ["/d", "/s", "/c", "npx.cmd -y @klodr/gmail-mcp"]
-    : ["-y", "@klodr/gmail-mcp"];
+    ? ["/d", "/s", "/c", "npx.cmd -y slack-mcp-server"]
+    : ["-y", "slack-mcp-server"];
 
 const child = spawn(command, args, {
-  env: { ...process.env, GOOGLE_SERVICE_ACCOUNT_JSON: serviceAccount },
+  env: { ...process.env, SLACK_BOT_TOKEN: botToken, SLACK_TEAM_ID: teamId },
   stdio: "inherit",
   windowsHide: true,
 });
