@@ -1,1 +1,7 @@
 web-search-mcp/
+node_modules
+.continue/.env.local
+preme-os/.env.local
+gcp-oauth.keys.json
+credentials.json
+.continue/premeos-*.json

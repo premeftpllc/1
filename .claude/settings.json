@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Administrator/.continue/**)",
+      "Bash(node -e ' *)",
+      "Bash(powershell.exe -NoProfile -Command \"[Environment]::GetEnvironmentVariable\\('MAKE_MCP_AUTHORIZATION','User'\\); [Environment]::GetEnvironmentVariable\\('MAKE_MCP_AUTHORIZATION','Machine'\\); [Environment]::GetEnvironmentVariable\\('GOOGLE_SERVICE_ACCOUNT_JSON','User'\\)\")",
+      "mcp__claude_ai_Make__users_me",
+      "mcp__claude_ai_Make__environment_get",
+      "mcp__claude_ai_Make__credential-requests_list",
+      "mcp__claude_ai_Notion__notion-list-recent-pages",
+      "mcp__claude_ai_Notion__notion-search",
+      "mcp__claude_ai_Notion__notion-fetch",
+      "Bash(git add *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\Administrator\\.continue"
+    ]
+  }
+}

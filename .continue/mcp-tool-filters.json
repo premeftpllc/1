@@ -1,0 +1,16 @@
+{
+  "_comment": "Tool names kept when a bridge runs in trimmed mode. Edit freely — nothing else needs to change. To get every tool back for one session, set the mode env var (see each bridge) to 'all'.",
+  "make": [
+    "scenarios_list", "scenarios_get", "scenarios_create", "scenarios_update", "scenarios_delete",
+    "scenarios_activate", "scenarios_deactivate", "scenarios_run", "scenarios_replay", "scenarios_interface",
+    "executions_list", "executions_get", "executions_get-detail",
+    "connections_list", "connections_get", "connection-metadata_get",
+    "credential-requests_list", "credential-requests_get", "credential-requests_create",
+    "credential-requests_credential-decline", "credential-requests_delete", "credential-requests_extend-connection",
+    "folders_list", "folders_create", "folders_update", "folders_delete",
+    "scenario-labels_list", "scenario-labels_assign", "scenario-labels_unassign", "scenario-labels_create",
+    "data-stores_list", "data-stores_get", "data-store-records_list",
+    "hooks_list", "hooks_get", "hooks_ping",
+    "environment_get", "teams_list", "teams_get", "organizations_list", "organizations_get", "users_me"
+  ]
+}
