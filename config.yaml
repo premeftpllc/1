@@ -26,11 +26,15 @@ models:
       - embed
     requestOptions:
       timeout: 300000
+  - name: Autodetect
+    provider: lmstudio
+    model: AUTODETECT
+    apiBase: http://127.0.0.1:1235/v1
 mcpServers:
   - name: web-search
     command: node
     args:
-      - C:/Users/Administrator/continue-demo/web-search-mcp/dist/index.js
+      - C:/Users/Administrator/.continue/web-search-mcp/dist/index.js
     env:
       BROWSER_HEADLESS: "true"
       BROWSER_TYPES: chromium
@@ -40,40 +44,40 @@ mcpServers:
   - name: clock
     command: node
     args:
-      - C:/Users/Administrator/continue-demo/.continue/mcp-clock.mjs
+      - C:/Users/Administrator/.continue/mcp-clock.mjs
   - name: make-custom-mcp
     command: node
     args:
-      - C:/Users/Administrator/continue-demo/.continue/mcp-make-bridge.js
+      - C:/Users/Administrator/.continue/mcp-make-bridge.js
   - name: notion
     command: node
     args:
-      - C:/Users/Administrator/continue-demo/.continue/mcp-notion-launcher.js
+      - C:/Users/Administrator/.continue/mcp-notion-launcher.js
   - name: airtable
     command: node
     args:
-      - C:/Users/Administrator/continue-demo/.continue/mcp-airtable-launcher.js
+      - C:/Users/Administrator/.continue/mcp-airtable-launcher.js
   - name: slack
     command: node
     args:
-      - C:/Users/Administrator/continue-demo/.continue/mcp-slack-launcher.js
+      - C:/Users/Administrator/.continue/mcp-slack-launcher.js
   - name: gmail
     command: node
     args:
-      - C:/Users/Administrator/continue-demo/.continue/mcp-gmail-launcher.js
+      - C:/Users/Administrator/.continue/mcp-gmail-launcher.js
   - name: google-calendar
     command: node
     args:
-      - C:/Users/Administrator/continue-demo/.continue/mcp-calendar-launcher.js
+      - C:/Users/Administrator/.continue/mcp-calendar-launcher.js
   - name: google-drive
     command: node
     args:
-      - C:/Users/Administrator/continue-demo/.continue/mcp-drive-launcher.js
+      - C:/Users/Administrator/.continue/mcp-drive-launcher.js
   - name: shopify
     command: node
     args:
-      - C:/Users/Administrator/continue-demo/.continue/mcp-shopify-launcher.js
+      - C:/Users/Administrator/.continue/mcp-shopify-launcher.js
   - name: zapier
     command: node
     args:
-      - C:/Users/Administrator/continue-demo/.continue/mcp-zapier-bridge.mjs
+      - C:/Users/Administrator/.continue/mcp-zapier-bridge.mjs
