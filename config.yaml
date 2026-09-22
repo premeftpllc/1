@@ -2,20 +2,24 @@ name: Local Qwen LM Studio Config
 version: 1.0.0
 schema: v1
 models:
-  - name: deepseek-v4-pro-qwen3.5-9b-mtp
+  - name: nemotron-3-nano-4b
     provider: lmstudio
-    model: deepseek-v4-pro-qwen3.5-9b-mtp
+    model: nvidia/nemotron-3-nano-4b
     apiBase: http://127.0.0.1:1235/v1
     roles:
       - chat
       - autocomplete
       - edit
       - apply
+      - refactor
+      - rewrite
+      - explain
+      - docs
     capabilities:
       - tool_use
     defaultCompletionOptions:
-      contextLength: 131072
-      maxTokens: 4096
+      contextLength: 4096
+      maxTokens: 2048
     requestOptions:
       timeout: 300000
   - name: Nomic Embed Text v1.5
@@ -84,15 +88,15 @@ mcpServers:
 
 # Model selection for each role/field
 modelRoles:
-  default: deepseek-v4-pro-qwen3.5-9b-mtp
-  chat: deepseek-v4-pro-qwen3.5-9b-mtp
-  autocomplete: deepseek-v4-pro-qwen3.5-9b-mtp
-  edit: deepseek-v4-pro-qwen3.5-9b-mtp
-  apply: deepseek-v4-pro-qwen3.5-9b-mtp
-  refactor: deepseek-v4-pro-qwen3.5-9b-mtp
-  rewrite: deepseek-v4-pro-qwen3.5-9b-mtp
-  explain: deepseek-v4-pro-qwen3.5-9b-mtp
-  docs: deepseek-v4-pro-qwen3.5-9b-mtp
+  default: nemotron-3-nano-4b
+  chat: nemotron-3-nano-4b
+  autocomplete: nemotron-3-nano-4b
+  edit: nemotron-3-nano-4b
+  apply: nemotron-3-nano-4b
+  refactor: nemotron-3-nano-4b
+  rewrite: nemotron-3-nano-4b
+  explain: nemotron-3-nano-4b
+  docs: nemotron-3-nano-4b
   embed: Nomic Embed Text v1.5
 
 # Settings for different operations
