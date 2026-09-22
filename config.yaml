@@ -81,3 +81,39 @@ mcpServers:
     command: node
     args:
       - C:/Users/Administrator/.continue/mcp-zapier-bridge.mjs
+
+# Model selection for each role/field
+modelRoles:
+  default: deepseek-v4-pro-qwen3.5-9b-mtp
+  chat: deepseek-v4-pro-qwen3.5-9b-mtp
+  autocomplete: deepseek-v4-pro-qwen3.5-9b-mtp
+  edit: deepseek-v4-pro-qwen3.5-9b-mtp
+  apply: deepseek-v4-pro-qwen3.5-9b-mtp
+  refactor: deepseek-v4-pro-qwen3.5-9b-mtp
+  rewrite: deepseek-v4-pro-qwen3.5-9b-mtp
+  explain: deepseek-v4-pro-qwen3.5-9b-mtp
+  docs: deepseek-v4-pro-qwen3.5-9b-mtp
+  embed: Nomic Embed Text v1.5
+
+# Settings for different operations
+settings:
+  autocomplete:
+    enabled: true
+    maxTokens: 512
+    useCache: true
+
+  edit:
+    showDiff: true
+    allowMultiFile: true
+    requestConfirmation: true
+    maxFiles: 10
+
+  apply:
+    maxFiles: 5
+    dryRun: false
+    showSummary: true
+
+  chat:
+    systemPrompt: "You are an expert AI developer assistant. Help developers write code, debug issues, understand complex systems, and improve their workflow."
+    markdown: true
+    codeBlockStyle: fenced
