@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Administrator/.continue/**)",
+      "Bash(node -e ' *)",
+      "Bash(powershell.exe -NoProfile -Command \"[Environment]::GetEnvironmentVariable\\('MAKE_MCP_AUTHORIZATION','User'\\); [Environment]::GetEnvironmentVariable\\('MAKE_MCP_AUTHORIZATION','Machine'\\); [Environment]::GetEnvironmentVariable\\('GOOGLE_SERVICE_ACCOUNT_JSON','User'\\)\")",
+      "mcp__claude_ai_Make__users_me",
+      "mcp__claude_ai_Make__environment_get",
+      "mcp__claude_ai_Make__credential-requests_list",
+      "mcp__claude_ai_Notion__notion-list-recent-pages",
+      "mcp__claude_ai_Notion__notion-search",
+      "mcp__claude_ai_Notion__notion-fetch",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Continue.dev local MCP setup — replicate Mac configuration on Windows PC *)",
+      "Bash(git push *)",
+      "Bash(cd /c/Users/Administrator && find . -maxdepth 3 -type d -name \"*web-search*\" 2>/dev/null | head -20)",
+      "Read(//c/Users/Administrator/**)",
+      "PowerShell(Get-ChildItem env: | Where-Object { $_.Name -match '\\(MAKE|GOOGLE|SLACK|AIRTABLE|NOTION|SHOPIFY|ZAPIER\\)' } | Select-Object Name, Value)",
+      "PowerShell([Environment]::GetEnvironmentVariable\\('MAKE_MCP_AUTHORIZATION', 'User'\\))",
+      "Bash(git config *)",
+      "Bash(ls -la \"C:/Users/Administrator/.continue/\" 2>/dev/null | head -20)",
+      "Bash(find \"C:/Users/Administrator/.continue\" -type f -name \"*launcher*\" 2>/dev/null)",
+      "Bash(grep -n \"scripts/\" \"C:/Users/Administrator/.continue/config.yaml\")",
+      "Bash(read dir *)",
+      "Bash(diff \"C:/Users/Administrator/.continue/.env.local\" \"C:/Users/Administrator/continue-demo/.continue/.env.local\" 2>/dev/null && echo \"FILES ARE IDENTICAL\" || echo \"FILES DIFFER\")",
+      "Bash(git submodule *)",
+      "mcp__claude_ai_Notion__notion-create-pages",
+      "Bash(gh repo *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\Administrator\\.continue"
+    ]
+  }
+}
