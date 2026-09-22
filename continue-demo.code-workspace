@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "../continue-demo"
+		}
+	],
+	"settings": {
+		"chat.mcp.discovery.enabled": {
+			"claude-desktop": true,
+			"copilot": true,
+			"windsurf": true,
+			"cursor-global": true,
+			"cursor-workspace": true
+		},
+		"chat.mcp.gallery.enabled": true,
+		"chat.mcp.assisted.nuget.enabled": true,
+		"chat.experimental.useSkillAdherencePrompt": true,
+		"chat.viewProgressBadge.enabled": true,
+		"chat.restoreLastPanelSession": true,
+		"chat.agent.thinkingStyle": "fixedScrolling",
+		"inlineChat.defaultModel": "qwen2.5-14b-instruct (lmstudio)"
+	}
+}

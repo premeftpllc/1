@@ -1,0 +1,7 @@
+Below is a repository map. 
+For each file in the codebase, this map contains the name of the file, and the signature for any classes, methods, or functions in the file.
+
+pathlib_recursive_glob_documentation.md
+summarize_logs.py
+tests_summarize_logs.py
+.playwright-mcp/page-2026-09-18T22-48-47-113Z.yml

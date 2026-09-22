@@ -1,7 +1,29 @@
-web-search-mcp/
-node_modules
-.continue/.env.local
-preme-os/.env.local
-gcp-oauth.keys.json
-credentials.json
-.continue/premeos-*.json
+﻿# Environment variables
+.env.local
+.env
+.env.*.local
+
+# Session data and devdata
+sessions/
+dev_data/
+index/
+
+# Cache and build
+__pycache__/
+node_modules/
+.next/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Playwright
+.playwright-mcp/
