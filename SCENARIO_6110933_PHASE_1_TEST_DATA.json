@@ -1,0 +1,448 @@
+{
+  "test_environment": "Phase 1 Validation (50-100 Sample Products)",
+  "test_date": "2026-09-23",
+  "test_scenarios": {
+    "scenario_1_baseline_no_changes": {
+      "name": "Baseline - No Changes (100 unchanged products)",
+      "description": "All products unchanged from last sync. Validates that no false positives occur.",
+      "setup": {
+        "total_products": 100,
+        "changed_products": 0,
+        "new_products": 0,
+        "deleted_products": 0,
+        "last_sync_age_hours": 6
+      },
+      "sample_products": [
+        {
+          "id": "gid://shopify/Product/1",
+          "sku": "ABC-001",
+          "title": "Vintage Leather Jacket - Red",
+          "price": 249.99,
+          "status": "active",
+          "inventory_qty": 5,
+          "weight": 1.5,
+          "hash_action": "COMPARE_ONLY"
+        },
+        {
+          "id": "gid://shopify/Product/2",
+          "sku": "ABC-002",
+          "title": "Premium Wool Sweater - Blue",
+          "price": 89.99,
+          "status": "active",
+          "inventory_qty": 12,
+          "weight": 0.6,
+          "hash_action": "COMPARE_ONLY"
+        }
+      ],
+      "expected_result": {
+        "changed_count": 0,
+        "unchanged_count": 100,
+        "change_percentage": "0.0%",
+        "ops_saved": 100,
+        "duration_seconds": "3-5"
+      },
+      "validation_checks": [
+        "changedProducts.length === 0",
+        "product_hashes unchanged",
+        "duration < 8 seconds",
+        "no false positives"
+      ]
+    },
+    "scenario_2_new_product": {
+      "name": "New Product Added (1 new, 99 existing)",
+      "description": "Single new product added to Shopify. Validates new product detection.",
+      "setup": {
+        "total_products": 101,
+        "existing_products": 100,
+        "new_products": 1,
+        "changed_products": 0,
+        "last_sync_age_hours": 6
+      },
+      "sample_products": [
+        {
+          "id": "gid://shopify/Product/1",
+          "sku": "ABC-001",
+          "title": "Vintage Leather Jacket - Red",
+          "price": 249.99,
+          "status": "active",
+          "inventory_qty": 5,
+          "weight": 1.5,
+          "hash_action": "COMPARE_ONLY",
+          "change_type": "UNCHANGED"
+        },
+        {
+          "id": "gid://shopify/Product/101",
+          "sku": "ABC-101",
+          "title": "Cashmere Scarf - Black",
+          "price": 199.99,
+          "status": "active",
+          "inventory_qty": 8,
+          "weight": 0.2,
+          "hash_action": "NEW_PRODUCT",
+          "change_type": "NEW",
+          "reason": "Not in last_sync state"
+        }
+      ],
+      "expected_result": {
+        "changed_count": 1,
+        "unchanged_count": 100,
+        "change_percentage": "1.0%",
+        "ops_saved": 100,
+        "ops_cost_new": 1,
+        "duration_seconds": "4-6"
+      },
+      "validation_checks": [
+        "changedProducts.length === 1",
+        "changedProducts[0].changeType === 'NEW'",
+        "new hash calculated and stored",
+        "duration < 10 seconds"
+      ]
+    },
+    "scenario_3_modified_products": {
+      "name": "Products Modified (8 changed, 92 unchanged)",
+      "description": "Mix of price, quantity, and status changes. Validates modification detection.",
+      "setup": {
+        "total_products": 100,
+        "unchanged_products": 92,
+        "qty_changes": 5,
+        "price_changes": 3,
+        "last_sync_age_hours": 6
+      },
+      "sample_products": [
+        {
+          "id": "gid://shopify/Product/5",
+          "sku": "ABC-005",
+          "title": "Silk Tie - Navy",
+          "price": 45.00,
+          "status": "active",
+          "inventory_qty": 25,
+          "weight": 0.1,
+          "hash_action": "COMPARE",
+          "change_type": "UNCHANGED",
+          "old_hash": "abc123def456",
+          "new_hash": "abc123def456"
+        },
+        {
+          "id": "gid://shopify/Product/12",
+          "sku": "ABC-012",
+          "title": "Cotton T-Shirt - White",
+          "price": 19.99,
+          "status": "active",
+          "inventory_qty": 15,
+          "weight": 0.25,
+          "hash_action": "COMPARE",
+          "change_type": "MODIFIED",
+          "change_reason": "inventory_qty changed",
+          "old_inventory": 20,
+          "new_inventory": 15,
+          "old_hash": "aaa111bbb222",
+          "new_hash": "ccc333ddd444"
+        },
+        {
+          "id": "gid://shopify/Product/23",
+          "sku": "ABC-023",
+          "title": "Denim Jacket - Blue",
+          "price": 99.99,
+          "status": "active",
+          "inventory_qty": 8,
+          "weight": 1.2,
+          "hash_action": "COMPARE",
+          "change_type": "MODIFIED",
+          "change_reason": "price changed",
+          "old_price": 89.99,
+          "new_price": 99.99,
+          "old_hash": "xxx777yyy888",
+          "new_hash": "zzz999aaa000"
+        }
+      ],
+      "expected_result": {
+        "changed_count": 8,
+        "unchanged_count": 92,
+        "change_percentage": "8.0%",
+        "ops_saved": 92,
+        "duration_seconds": "5-8"
+      },
+      "validation_checks": [
+        "changedProducts.length === 8",
+        "All changed products have hash_changed === true",
+        "Each changed hash differs from old hash",
+        "duration < 12 seconds",
+        "no false positives"
+      ]
+    },
+    "scenario_4_product_deleted": {
+      "name": "Product Deleted (99 returned, 1 missing)",
+      "description": "Product deleted from Shopify. Validates handling of missing products.",
+      "setup": {
+        "total_products_last_sync": 100,
+        "total_products_current": 99,
+        "deleted_products": 1,
+        "unchanged_products": 99,
+        "last_sync_age_hours": 6
+      },
+      "sample_products": [
+        {
+          "id": "gid://shopify/Product/1",
+          "sku": "ABC-001",
+          "title": "Vintage Leather Jacket - Red",
+          "price": 249.99,
+          "status": "active",
+          "inventory_qty": 5,
+          "weight": 1.5,
+          "hash_action": "COMPARE_ONLY"
+        }
+      ],
+      "deleted_product": {
+        "id": "gid://shopify/Product/50",
+        "sku": "ABC-050",
+        "title": "Discontinued Item",
+        "note": "This product was in last_sync but not returned by API"
+      },
+      "expected_result": {
+        "changed_count": 0,
+        "unchanged_count": 99,
+        "change_percentage": "0.0%",
+        "deleted_products_detected": 1,
+        "duration_seconds": "4-6"
+      },
+      "validation_checks": [
+        "Scenario completes without error",
+        "Changed count = 0 (deleted not in current set)",
+        "Next sync will show 99 products",
+        "No false positives"
+      ]
+    },
+    "scenario_5_high_change_rate": {
+      "name": "High Change Rate (15 changed, 85 unchanged)",
+      "description": "High volatility scenario - 15% of products changed. Validates performance.",
+      "setup": {
+        "total_products": 100,
+        "unchanged_products": 85,
+        "changed_products": 15,
+        "change_rate_percentage": 15,
+        "last_sync_age_hours": 6
+      },
+      "sample_products": [
+        {
+          "id": "gid://shopify/Product/1",
+          "sku": "ABC-001",
+          "title": "Product 1",
+          "price": 100,
+          "status": "active",
+          "inventory_qty": 10,
+          "hash_action": "COMPARE_ONLY",
+          "change_type": "UNCHANGED"
+        }
+      ],
+      "changed_products_example": [
+        {
+          "id": "gid://shopify/Product/10",
+          "change_type": "MODIFIED",
+          "field_changed": "inventory_qty"
+        },
+        {
+          "id": "gid://shopify/Product/20",
+          "change_type": "MODIFIED",
+          "field_changed": "price"
+        },
+        {
+          "id": "gid://shopify/Product/30",
+          "change_type": "MODIFIED",
+          "field_changed": "status"
+        }
+      ],
+      "expected_result": {
+        "changed_count": 15,
+        "unchanged_count": 85,
+        "change_percentage": "15.0%",
+        "ops_saved": 85,
+        "ops_cost": 15,
+        "duration_seconds": "6-10"
+      },
+      "validation_checks": [
+        "changedProducts.length === 15",
+        "stats.change_percentage === '15.0'",
+        "duration < 12 seconds",
+        "all 15 products identified correctly"
+      ]
+    },
+    "scenario_6_hash_consistency": {
+      "name": "Hash Consistency (Same product = same hash)",
+      "description": "Verify that identical product data produces identical hashes.",
+      "setup": {
+        "test_product": {
+          "id": "gid://shopify/Product/1",
+          "sku": "TEST-001",
+          "title": "Test Product",
+          "price": 99.99,
+          "status": "active",
+          "inventory_qty": 50,
+          "weight": 2.0
+        },
+        "test_iterations": 10,
+        "expected_hash": "abc123def456ghi789jkl"
+      },
+      "expected_result": {
+        "hash_runs": 10,
+        "consistent_hashes": 10,
+        "collisions": 0,
+        "consistency_percentage": "100.0%"
+      },
+      "validation_checks": [
+        "All 10 runs produce same hash",
+        "No SHA256 collisions detected",
+        "Hash algorithm validated"
+      ]
+    },
+    "scenario_7_data_store_failure": {
+      "name": "Data Store Failure Recovery",
+      "description": "Test scenario recovery when data store is missing or corrupted.",
+      "setup": {
+        "data_store_status": "DELETED or CORRUPTED",
+        "action": "Run scenario without sync state",
+        "products": 100
+      },
+      "expected_result": {
+        "changed_count": 100,
+        "unchanged_count": 0,
+        "change_percentage": "100.0%",
+        "behavior": "Fallback to full sync (expected for recovery)"
+      },
+      "validation_checks": [
+        "Scenario detects missing data store",
+        "Treats all products as new",
+        "Recreates data store",
+        "Completes without crashing"
+      ]
+    }
+  },
+  "metrics_tracking": {
+    "baseline_metrics_before_phase_1": {
+      "monthly_operations": 350,
+      "operations_per_sync": 15,
+      "syncs_per_month": 24,
+      "monthly_cost_usd": 42.00,
+      "average_sync_duration_seconds": 45,
+      "success_rate_percentage": 95,
+      "products_per_catalog": 100
+    },
+    "expected_phase_1_metrics": {
+      "monthly_operations": 175,
+      "operations_per_sync": 7.5,
+      "syncs_per_month": 24,
+      "monthly_cost_usd": 21.00,
+      "average_sync_duration_seconds": 8,
+      "success_rate_percentage": 99.5,
+      "average_change_rate_percentage": 10,
+      "operations_saved_per_sync": 7.5
+    },
+    "savings_calculation": {
+      "baseline_monthly_cost": 42.00,
+      "phase_1_monthly_cost": 21.00,
+      "monthly_savings_usd": 21.00,
+      "annual_savings_usd": 252.00,
+      "ops_reduction_percentage": 50,
+      "cost_reduction_percentage": 50,
+      "payback_period_days": 43
+    }
+  },
+  "validation_pass_criteria": {
+    "must_pass": [
+      {
+        "criterion": "Change Detection Accuracy >99%",
+        "test": "Scenario 3 (Modified Products)",
+        "threshold": ">99%",
+        "measurement": "No false positives + No false negatives"
+      },
+      {
+        "criterion": "Zero False Positives",
+        "test": "Scenario 1 (No Changes)",
+        "threshold": "100% accuracy",
+        "measurement": "changed_count === 0 after 3 consecutive runs"
+      },
+      {
+        "criterion": "New Product Detection",
+        "test": "Scenario 2 (New Product)",
+        "threshold": "100%",
+        "measurement": "All new products identified"
+      },
+      {
+        "criterion": "Operations Reduction",
+        "test": "All scenarios combined",
+        "threshold": "30-50% reduction",
+        "measurement": "Avg ops saved per sync > 105 ops"
+      },
+      {
+        "criterion": "Hash Consistency",
+        "test": "Scenario 6",
+        "threshold": "100%",
+        "measurement": "Same product = same hash in all runs"
+      },
+      {
+        "criterion": "Scenario Duration",
+        "test": "All scenarios",
+        "threshold": "<15 seconds max",
+        "measurement": "No sync exceeds 15 seconds"
+      },
+      {
+        "criterion": "Success Rate",
+        "test": "All scenarios",
+        "threshold": "99.5%+",
+        "measurement": "0-1 failures in 100+ runs"
+      }
+    ],
+    "nice_to_have": [
+      {
+        "criterion": "Performance Improvement",
+        "test": "Duration comparison",
+        "threshold": "<2% overhead",
+        "target": "Add <3 seconds to base sync time"
+      },
+      {
+        "criterion": "Data Integrity",
+        "test": "All scenarios",
+        "threshold": "0 data loss events",
+        "measurement": "No products lost or duplicated"
+      }
+    ]
+  },
+  "test_execution_log_template": {
+    "test_run": {
+      "run_id": "TEST_001",
+      "timestamp": "2026-09-23T10:00:00Z",
+      "tester_name": "Backend Engineer",
+      "scenario_tested": "scenario_1_baseline_no_changes",
+      "results": {
+        "status": "PASS or FAIL",
+        "changed_count_expected": 0,
+        "changed_count_actual": 0,
+        "unchanged_count_expected": 100,
+        "unchanged_count_actual": 100,
+        "duration_seconds": 4.2,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "data_integrity_verified": true,
+        "notes": "All validations passed"
+      }
+    }
+  },
+  "automation_metrics": {
+    "baseline_costs": {
+      "weekly_cost": 9.81,
+      "monthly_cost": 42.00,
+      "annual_cost": 504.00
+    },
+    "phase_1_costs": {
+      "weekly_cost": 4.90,
+      "monthly_cost": 21.00,
+      "annual_cost": 252.00
+    },
+    "roi_analysis": {
+      "implementation_hours": 6,
+      "implementation_cost_usd": 150,
+      "first_year_savings": 252,
+      "payback_period_days": 43,
+      "roi_percentage": 68
+    }
+  }
+}
