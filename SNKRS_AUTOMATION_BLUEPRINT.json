@@ -1,0 +1,281 @@
+{
+  "name": "SNKRS Automation - Drops to Shopify",
+  "description": "StockX SNKRS drops → Profit calc → Shopify listing → Discord alerts",
+  "metadata": {
+    "version": 1
+  },
+  "flow": [
+    {
+      "id": 1,
+      "module": "webhooks:generic",
+      "version": 1,
+      "parameters": {},
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "shopify:SearchProducts",
+      "version": 1,
+      "parameters": {
+        "store": "premeftp"
+      },
+      "mapper": {
+        "query": "1.model"
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": 3,
+      "module": "openai:CreateMessage",
+      "version": 1,
+      "parameters": {
+        "model": "gpt-4-turbo",
+        "temperature": 0.3
+      },
+      "mapper": {
+        "prompt": "You are a profit calculator for sneaker resale.\n\nInput:\n- SNKRS Purchase Price: {{1.price}}\n- Market MSRP: {{1.msrp}}\n- Model: {{1.model}}\n- Size: {{1.size}}\n\nCalculate:\n1. Shipping cost (estimate $8-15)\n2. Platform fee (5% of sale price)\n3. Shopify fee (2.9% of sale price)\n4. Net profit\n\nMarket price estimate: {{1.msrp}} * 1.2 (typical markup)\n\nReturn ONLY valid JSON (no markdown, no extra text):\n{\n  \"profit_amount\": NUMBER,\n  \"margin_percent\": NUMBER,\n  \"recommendation\": \"BUY\" or \"WATCH\" or \"SKIP\",\n  \"reasoning\": \"brief explanation\"\n}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": 4,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "parameters": {},
+      "mapper": {},
+      "routes": [
+        {
+          "id": 1,
+          "slabel": "BUY",
+          "flow": [
+            {
+              "id": 5,
+              "module": "http:PostRequest",
+              "version": 1,
+              "parameters": {
+                "method": "POST",
+                "url": "https://api.supplier.com/order",
+                "headers": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer YOUR_API_KEY"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ]
+              },
+              "mapper": {
+                "data": "{\"product_model\": \"{{1.model}}\", \"size\": \"{{1.size}}\", \"quantity\": 1, \"rush_order\": true, \"expected_delivery\": \"24-48 hours\"}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": -100
+                }
+              }
+            },
+            {
+              "id": 6,
+              "module": "shopify:CreateProduct",
+              "version": 1,
+              "parameters": {
+                "store": "premeftp"
+              },
+              "mapper": {
+                "title": "{{1.model}} - {{1.size}} (SNKRS Drop)",
+                "description": "Authentic SNKRS drop. Condition: New. Authentic Nike/Brand.",
+                "productType": "Sneakers",
+                "vendor": "PremeFTP",
+                "price": "{{1.msrp}}",
+                "sku": "SNKRS-{{1.model}}-{{1.size}}-{{now}}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 0
+                }
+              }
+            },
+            {
+              "id": 7,
+              "module": "airtable:CreateRecord",
+              "version": 1,
+              "parameters": {
+                "base": "appXXXXXXXXXXXXXX",
+                "table": "SNKRS Opportunities"
+              },
+              "mapper": {
+                "Date": "{{now | formatDate(\"YYYY-MM-DD\")}}",
+                "Item": "{{1.model}} {{1.size}}",
+                "Source": "SNKRS Drop",
+                "Cost": "{{1.price}}",
+                "List Price": "{{1.msrp}}",
+                "Expected Profit": "{{3.profit_amount}}",
+                "Profit Margin": "{{3.margin_percent}}",
+                "Status": "Listed",
+                "Recommendation": "{{3.recommendation}}",
+                "AI Score": "{{3.ai_score}}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": 0
+                }
+              }
+            },
+            {
+              "id": 8,
+              "module": "discord:SendMessageSimple",
+              "version": 1,
+              "parameters": {
+                "channel": "snkrs-drops"
+              },
+              "mapper": {
+                "text": "🚨 **SNKRS OPPORTUNITY - BUY SIGNAL**\n\n📦 {{1.model}} - {{1.size}}\n💰 SNKRS: ${{1.price}} | List: ${{1.msrp}}\n📈 Expected Profit: ${{3.profit_amount}} ({{3.margin_percent}}%)\n⏰ Status: Listed\n\nAI Recommendation: {{3.recommendation}}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1500,
+                  "y": 0
+                }
+              }
+            },
+            {
+              "id": 9,
+              "module": "airtable:SearchRecords",
+              "version": 1,
+              "parameters": {
+                "base": "appXXXXXXXXXXXXXX",
+                "table": "SNKRS Opportunities"
+              },
+              "mapper": {
+                "filterByFormula": "{Status} = 'Sold'"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1800,
+                  "y": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "slabel": "WATCH",
+          "flow": [
+            {
+              "id": 10,
+              "module": "airtable:CreateRecord",
+              "version": 1,
+              "parameters": {
+                "base": "appXXXXXXXXXXXXXX",
+                "table": "SNKRS Opportunities"
+              },
+              "mapper": {
+                "Date": "{{now | formatDate(\"YYYY-MM-DD\")}}",
+                "Item": "{{1.model}} {{1.size}}",
+                "Source": "SNKRS Drop",
+                "Cost": "{{1.price}}",
+                "List Price": "{{1.msrp}}",
+                "Expected Profit": "{{3.profit_amount}}",
+                "Status": "Watch",
+                "Recommendation": "WATCH"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 200
+                }
+              }
+            },
+            {
+              "id": 11,
+              "module": "discord:SendMessageSimple",
+              "version": 1,
+              "parameters": {
+                "channel": "snkrs-research"
+              },
+              "mapper": {
+                "text": "📌 **WATCH: Marginal SNKRS Opportunity**\n\n🏃 {{1.model}} - {{1.size}}\n💰 SNKRS: ${{1.price}} | Est List: ${{1.msrp}}\n📊 Profit: ${{3.profit_amount}} ({{3.margin_percent}}%)\n⚠️ Status: Monitoring (may restock)\n\nRecommendation: WATCH"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": 200
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "slabel": "SKIP",
+          "flow": [
+            {
+              "id": 12,
+              "module": "airtable:CreateRecord",
+              "version": 1,
+              "parameters": {
+                "base": "appXXXXXXXXXXXXXX",
+                "table": "SNKRS Log"
+              },
+              "mapper": {
+                "Date": "{{now | formatDate(\"YYYY-MM-DD\")}}",
+                "Item": "{{1.model}} {{1.size}}",
+                "Reason": "Low profit potential",
+                "Status": "Skipped"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 400
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "filter": {
+        "name": "If profit recommendation exists",
+        "conditions": [
+          [
+            {
+              "a": "3",
+              "o": "exist",
+              "b": ""
+            }
+          ]
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 750,
+          "y": 0
+        }
+      }
+    }
+  ],
+  "scheduling": {
+    "type": "indefinitely",
+    "interval": 900
+  }
+}
