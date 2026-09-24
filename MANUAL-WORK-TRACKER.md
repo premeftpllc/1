@@ -27,23 +27,19 @@
 **Priority:** MEDIUM  
 **Time:** 10 minutes  
 **Instructions:**
-1. Create `~/.continue/.env.local` with credentials:
+1. Create `~/.continue/.env` with correct variable names:
    ```bash
-   AIRTABLE_TOKEN=pat_...
-   SLACK_BOT_TOKEN=xoxb_...
-   SLACK_TEAM_ID=T_...
-   NOTION_TOKEN=ntn_...
-   GOOGLE_CREDENTIALS_PATH=/Users/premeftpllc/.continue/google-credentials.json
-   MAKE_API_KEY=sk_live_...
-   MAKE_TEAM_ID=...
-   MAKE_API_URL=https://us2.make.com/api/v2
+   NOTION_TOKEN=ntn_<your-internal-integration-secret>
+   AIRTABLE_API_KEY=pat<_or_ucl_><your-pat>
+   SLACK_MCP_XOXB_TOKEN=xoxb-<your-bot-token>
    ```
-2. Place Google service account JSON at `~/.continue/google-credentials.json`
-3. Restart VS Code
-4. Verify all MCPs show green ✅ in Continue → Tools
-5. **Completion:** Update this tracker to ✅
+2. Run **Terminal → Run Task → PremeOS: Check Continue MCP**
+3. Run **Terminal → Run Task → PremeOS: Enable ready MCP servers**
+4. Run **Developer: Reload Window**
+5. Toggle Agent mode in Continue and test: `@notion`, `@airtable`, `@slack`
+6. **Completion:** Update this tracker to ✅
 
-**Why:** MCPs are architecturally configured but need credentials activated.
+**Why:** MCP servers are disabled until secrets are available. The task copies ready servers into ~/.continue/mcpServers/ when all variables are set.
 
 ---
 
@@ -247,7 +243,7 @@
 |---------|--------|-----------|----------|
 | Airtable API Quota | Tier 2 Remediation blocked | Wait for reset | 2026-10-01 |
 | Make.com Scenario Truncation | Phase 5 incomplete | Manual import needed | User action |
-| MCP Credentials | Continue inactive | Setup .env.local | User action |
+| MCP Credentials | Continue inactive | Fill ~/.continue/.env, run PremeOS: Enable ready MCP servers | User action |
 
 ---
 

@@ -41,3 +41,7 @@ Use Continue for this local model. The separately installed Claude and OpenAI ex
 - Embedding test returned a numeric vector successfully.
 - Seven JSON/workspace files parsed successfully. Continue YAML parsed and matched the active copy; model property names were checked against the installed extension schema (not a full schema validation).
 - Native UI automation was unavailable, so Continue panel selection and an end-to-end editor interaction were not visually verified. Open the named workspace, select PremeOS Local in Continue, and reload the window if needed.
+
+## Addendum - 2026-09-24
+
+The workspace profile is **Main Config** (the earlier PremeOS Local profile was rolled back on 2026-09-22). MCP servers are now defined as secret-free blocks in `config/continue/mcpServers/` and activated per machine once their secrets are in `~/.continue/.env`. See [Continue MCP Architecture](CONTINUE-MCP-ARCHITECTURE.md) for setup details, credential how-tos, and troubleshooting. The list of removed server templates has been cleaned up.

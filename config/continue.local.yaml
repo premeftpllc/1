@@ -1,0 +1,28 @@
+name: Main Config
+version: 1.0.0
+schema: v1
+models:
+  - name: Gemma 4 (LM Studio)
+    provider: lmstudio
+    model: google/gemma-4-e2b
+    apiBase: http://localhost:1235/v1/
+    capabilities:
+      - tool_use
+    roles:
+      - chat
+      - autocomplete
+  - name: Nomic Embed Text (LM Studio)
+    provider: lmstudio
+    model: text-embedding-nomic-embed-text-v1.5
+    apiBase: http://localhost:1235/v1/
+    roles:
+      - embed
+  - name: Autodetect
+    provider: lmstudio
+    model: AUTODETECT
+    apiBase: http://localhost:1235/v1/
+
+# MCP servers are loaded from block files in ~/.continue/mcpServers/.
+# Source of truth: PremeOS repo config/continue/mcpServers/ (secret-free).
+# Secrets: ~/.continue/.env, referenced from blocks as secrets.NAME inside a dollar-double-brace template.
+# Activate ready blocks: python3 ~/PremeOS/1/scripts/workspace.py mcp --apply

@@ -316,19 +316,7 @@
         "operation": "Update Records (Batch)",
         "base_id": "[YOUR_BASE_ID]",
         "table_id": "[INVENTORY_TABLE_ID]",
-        "records_array": "{{
-          map(Batch_Accumulator.batch_array; record;
-          {
-            fields: {
-              SKU: record.sku,
-              URL: record.url,
-              Status: record.status,
-              Last_Updated: now(),
-              Batch_Size: Batch_Accumulator.batch_count,
-              Updated_By: 'Scenario_5901509_Batch_v2'
-            }
-          })
-        }}",
+        "records_array": "{{\n          map(Batch_Accumulator.batch_array; record;\n          {\n            fields: {\n              SKU: record.sku,\n              URL: record.url,\n              Status: record.status,\n              Last_Updated: now(),\n              Batch_Size: Batch_Accumulator.batch_count,\n              Updated_By: 'Scenario_5901509_Batch_v2'\n            }\n          })\n        }}",
         "notification_email": "[YOUR_EMAIL]"
       },
       "outputs": [

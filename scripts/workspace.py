@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -11,6 +12,11 @@ BASE = "http://127.0.0.1:1235"
 MODEL = "google/gemma-4-e2b"
 EMBED = "text-embedding-nomic-embed-text-v1.5"
 ROOT = Path(__file__).resolve().parents[1]
+CONTINUE_HOME = Path.home() / ".continue"
+MCP_BLOCKS = ROOT / "config" / "continue" / "mcpServers"
+MCP_ACTIVE = CONTINUE_HOME / "mcpServers"
+SECRET = re.compile(r"\$\{\{\s*secrets\.([A-Za-z0-9_]+)\s*\}\}")
+PLAIN = re.compile(r"(?<!\$)\$\{(?!\{)[A-Za-z_][A-Za-z0-9_]*\}")
 
 
 def request(path, payload=None):
@@ -21,10 +27,30 @@ def request(path, payload=None):
         return json.load(response)
 
 
+def env_names():
+    """Names (never values) of non-empty assignments in ~/.continue/.env."""
+    path = CONTINUE_HOME / ".env"
+    names = set()
+    if not path.exists():
+        return names
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if line.startswith("export "):
+            line = line[7:].strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key.strip() and value.strip().strip("\"'"):
+            names.add(key.strip())
+    return names
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["health", "chat", "embed", "validate"])
-    action = parser.parse_args().action
+    parser.add_argument("action", choices=["health", "chat", "embed", "validate", "mcp"])
+    parser.add_argument("--apply", action="store_true", help="Apply ready MCP block files")
+    args = parser.parse_args()
+    action = args.action
     if action == "validate":
         files = sorted(ROOT.glob("*.json")) + sorted((ROOT / ".vscode").glob("*.json"))
         files += sorted(ROOT.glob("*.code-workspace"))
@@ -60,6 +86,45 @@ def main():
         if "PREMEOS_OK" not in content:
             raise ValueError("Chat returned no expected marker; inspect model response/settings.")
         print("PASS: local chat generated PREMEOS_OK.")
+    elif action == "mcp":
+        names = env_names()
+        blocks = sorted(MCP_BLOCKS.glob("*.yaml"))
+        active_count = 0
+        for block in blocks:
+            text = block.read_text()
+            target = MCP_ACTIVE / block.name
+            current = target.read_text() if target.exists() else None
+            missing = [s for s in sorted(set(SECRET.findall(text))) if s not in names]
+            if missing:
+                state = "MISSING " + ", ".join(missing)
+                if args.apply and current is not None and block.name.startswith("premeos-"):
+                    target.unlink()
+                    state = "REMOVED (missing " + ", ".join(missing) + ")"
+            elif args.apply or current == text:
+                if current != text:
+                    MCP_ACTIVE.mkdir(parents=True, exist_ok=True)
+                    target.write_text(text)
+                state = "ACTIVE"
+                active_count += 1
+            else:
+                state = "READY" if current is None else "READY (active copy is stale; run --apply)"
+            print(f"{block.name}: {state}")
+        managed = {block.name for block in blocks}
+        active_files = sorted(MCP_ACTIVE.glob("*.y*ml")) if MCP_ACTIVE.exists() else []
+        for path in active_files:
+            if path.name not in managed:
+                print(f"WARN: unmanaged block in ~/.continue/mcpServers: {path.name}")
+        config = CONTINUE_HOME / "config.yaml"
+        for path in [config] + active_files:
+            if path.exists() and PLAIN.search(path.read_text()):
+                print(f"WARN: {path.name} uses literal ${{VAR}}; Continue only expands secrets templates.")
+        copy = ROOT / "config" / "continue.local.yaml"
+        if config.exists() and copy.exists() and config.read_text() != copy.read_text():
+            print("WARN: ~/.continue/config.yaml differs from config/continue.local.yaml")
+        env_file = CONTINUE_HOME / ".env"
+        if env_file.exists() and env_file.stat().st_mode & 0o077:
+            print("WARN: ~/.continue/.env should be mode 600 (chmod 600 ~/.continue/.env).")
+        print(f"PASS: {len(blocks)} blocks checked; {active_count} active.")
     else:
         result = request("/v1/embeddings", {"model": EMBED, "input": "search_document: PremeOS workspace health check"})
         vector = result["data"][0]["embedding"]

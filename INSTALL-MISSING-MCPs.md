@@ -1,3 +1,5 @@
+> **Superseded 2026-09-24.** Historical Windows/PC notes. Several package names and variable names below are wrong for Continue (for example @airtable/mcp-server, @anthropic-ai/gmail-mcp-server, make-custom-mcp, .env.local, ${VAR}). Use [docs/CONTINUE-MCP-ARCHITECTURE.md](docs/CONTINUE-MCP-ARCHITECTURE.md).
+
 # Install Missing MCP Servers for Continue
 
 **Status:** Action Required  

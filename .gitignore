@@ -6,6 +6,9 @@
 *.key
 credentials*.json
 *credentials*.json
+gcp-oauth.keys.json
+*.keys.json
+.gmail-mcp/
 .local/
 .venv/
 __pycache__/

@@ -1,219 +1,191 @@
 # Git Cross-Device Access Setup
 
-**Current Status:** ❌ BLOCKED
-- Local commits: 21 ahead of remote
-- Files pushed to GitHub: NO
-- Cross-device access: NOT AVAILABLE
+## Current Status
 
----
+**SSH Remote:** `git@github.com:premeftpllc/1.git` ✅ Works  
+**Branch:** `claude/worker-1-kz0ycj` (PremeOS workspace)  
+**Tracking:** `origin/claude/worker-1-kz0ycj`  
+**Commits:** In sync (0 ahead, 0 behind)
 
-## The Problem
-
-Your 21 new commits (Tasks 3, 4, SNKRS plan, etc.) are only on this machine. They won't be visible on other devices until pushed to GitHub.
-
----
-
-## Solution Options
-
-### Option 1: GitHub Personal Access Token (Easiest) ⭐ RECOMMENDED
-
-**Step 1: Create GitHub Personal Access Token**
-1. Go to https://github.com/settings/tokens
-2. Click "Generate new token" → "Generate new token (classic)"
-3. Give it a name: "PremeOS Local Dev"
-4. Select scopes:
-   - ✓ repo (full control of private repositories)
-   - ✓ workflow (update GitHub Actions and workflows)
-5. Click "Generate token"
-6. **COPY the token** (you won't see it again)
-
-**Step 2: Configure Git Credentials**
+Verify with:
 ```bash
-# Run this in terminal:
-git config --global credential.helper store
-
-# Then run this git command (it will prompt for credentials):
 cd /Users/premeftpllc/PremeOS/1
-git push origin claude/vibrant-einstein-wcjd7l
-
-# When prompted:
-# Username: premeftpllc
-# Password: [PASTE YOUR TOKEN HERE]
-
-# Git will save credentials for future pushes
-```
-
-**Step 3: Verify Push**
-```bash
-git branch -vv
-# Should show: "up to date" instead of "ahead 21"
+git status -sb
 ```
 
 ---
 
-### Option 2: SSH Key Setup (More Secure)
+## SSH Key Setup (Recommended)
 
-**Step 1: Generate SSH Key** (if you don't have one)
+SSH is more secure than storing tokens in plain text.
+
+### Step 1: Generate SSH Key (if needed)
 ```bash
 ssh-keygen -t ed25519 -C "premeftpllc@gmail.com"
 # Press Enter for all prompts (use defaults)
 ```
 
-**Step 2: Add to GitHub**
+### Step 2: Add Public Key to GitHub
 ```bash
-# Copy your public key:
 cat ~/.ssh/id_ed25519.pub
-
-# Then go to https://github.com/settings/keys
+# Copy the output, then:
+# Go to https://github.com/settings/keys
 # Click "New SSH key"
-# Paste the key
-# Give it a title: "MacBook-Neo"
-# Click "Add SSH key"
+# Paste and title it "MacBook-Neo"
 ```
 
-**Step 3: Test SSH**
+### Step 3: Test Connection
 ```bash
 ssh -T git@github.com
-# Should say: "Hi premeftpllc! You've successfully authenticated..."
+# Should print: "Hi premeftpllc! You've successfully authenticated..."
 ```
 
-**Step 4: Update Git Remote**
+### Step 4: Verify Remote
 ```bash
 cd /Users/premeftpllc/PremeOS/1
-git remote set-url origin git@github.com:premeftpllc/1.git
-git push origin claude/vibrant-einstein-wcjd7l
+git remote -v
+# Should show: origin git@github.com:premeftpllc/1.git
 ```
 
 ---
 
-### Option 3: Credential Manager (macOS)
+## GitHub CLI Alternative
 
-**Step 1: Install GitHub CLI** (if you have Homebrew)
+If you prefer using `gh`:
+
 ```bash
 brew install gh
-```
-
-**Step 2: Authenticate**
-```bash
 gh auth login
-# Follow the prompts to authenticate with GitHub
+# Follow prompts to authenticate with GitHub
+cd /Users/premeftpllc/PremeOS/1
+git push origin claude/worker-1-kz0ycj
 ```
 
-**Step 3: Git will auto-use credentials**
+---
+
+## Do NOT Use Credential Store
+
+Plain-text credential storage is insecure. Avoid:
+```bash
+# DO NOT run this:
+git config --global credential.helper store
+```
+
+Use SSH or `gh` instead.
+
+---
+
+## Daily Workflow
+
+### Push Changes
 ```bash
 cd /Users/premeftpllc/PremeOS/1
-git push origin claude/vibrant-einstein-wcjd7l
+git push origin claude/worker-1-kz0ycj
 ```
 
----
-
-## Current Commits Pending Push (21 total)
-
-```
-37d0840 Add SNKRS Automation Deployment Plan
-b58743a Add Week 1 completion documentation
-33b74d8 Add Scenario 5901509 redundant check optimization
-0771ecb Add Scenario 6110933 Phase 1 Delta Sync Implementation
-6d068b4 Add Week 1 compilation status report
-[15 more...]
-```
-
-**Files affected:** 30+ new files, 10,000+ lines
-
----
-
-## What Happens After Push
-
-✅ **On GitHub:**
-- All 21 commits visible in remote branch
-- All 30+ files visible in web interface
-- Full history accessible
-
-✅ **On Other Devices:**
-- `git pull origin claude/vibrant-einstein-wcjd7l` downloads everything
-- All Week 1 work visible locally
-- Can continue work from any device
-
-✅ **Collaboration:**
-- Files tracked across devices
-- Changes sync via git push/pull
-- One source of truth on GitHub
-
----
-
-## Recommended Action
-
-**Do THIS NOW (choose one option above):**
-
-1. **EASIEST:** Use Personal Access Token (Option 1)
-   - Time: 5 minutes
-   - Steps: Create token → Configure git → Push
-
-2. **MOST SECURE:** Set up SSH (Option 2)
-   - Time: 10 minutes
-   - Steps: Generate key → Add to GitHub → Push
-
----
-
-## Verification Command
-
-After setup, run this to confirm:
+### Pull Changes from Another Device
 ```bash
-cd /Users/premeftpllc/PremeOS/1
-git push origin claude/vibrant-einstein-wcjd7l
+git pull origin claude/worker-1-kz0ycj
+```
+
+### Check Branch Status
+```bash
 git branch -vv
-# Should show "up to date" instead of "ahead 21"
+# Should show: claude/worker-1-kz0ycj ... up to date
 ```
 
 ---
 
-## Branch Merge Strategy (Optional)
+## Handoff with Git Notes
 
-After cross-device sync is working:
+For asynchronous communication between devices (handoff messages, checkpoints, blockers):
 
-**Current Setup:**
-- `claude/vibrant-einstein-wcjd7l` — Week 1 execution (current)
-- `claude/worker-1-kz0ycj` — Main branch for merging
-
-**Recommended:**
-1. Get claude/vibrant-einstein-wcjd7l pushed ✅ (do this first)
-2. Create PR from vibrant-einstein → worker-1-kz0ycj
-3. Test on worker branch
-4. Merge to main when ready
-
----
-
-## Multi-Device Workflow
-
-Once authentication is set up:
-
-**Machine A:**
+### Write a Note
 ```bash
-git commit -m "Fix: optimization"
-git push origin claude/vibrant-einstein-wcjd7l
+git notes add -m "Status: Completed Phase 2. Next: Run MCP setup tasks." <commit-hash>
+# Or append to existing note:
+git notes append -m "Update: MCP credentials filled in." <commit-hash>
 ```
 
-**Machine B:**
+### Read Notes
 ```bash
-git pull origin claude/vibrant-einstein-wcjd7l
-# All changes from Machine A now available
+git log --notes -5
+# Shows the 5 most recent commits with their notes
+```
+
+### Share Notes to Remote
+```bash
+git push origin refs/notes/commits
+```
+
+### Receive Notes from Remote
+```bash
+git fetch origin refs/notes/commits:refs/notes/commits
 ```
 
 ---
 
-## Status After Fix
+## Branch Protection
 
-| Item | Before | After |
-|------|--------|-------|
-| Local commits | 21 ahead | 0 ahead (synced) |
-| GitHub visibility | ❌ Not visible | ✅ All visible |
-| Cross-device access | ❌ Blocked | ✅ Available |
-| Collaboration | ❌ Limited | ✅ Full sync |
+**IMPORTANT:** `origin/main` is the PC's `C:\Users\Administrator\.continue` folder with unrelated history and Windows paths.
+
+**Never merge `main` into `claude/worker-1-kz0ycj`.** The two branches have different:
+- Machine paths (C:/ on PC vs ~ on Mac)
+- Models (Qwen/Nemotron vs Gemma)
+- Configuration styles
+
+If you accidentally pull `main`, undo it:
+```bash
+git reset --hard HEAD~1  # Discard the merge commit
+git branch -D main  # Delete local main if unwanted
+```
 
 ---
 
-**Action Required:** Follow Option 1 or 2 above to push your 21 commits to GitHub.
+## Multi-Device Workflow Example
 
-**Time Estimate:** 5-10 minutes
+### Machine A (Mac)
+```bash
+git commit -m "Fix: Continue MCP architecture"
+git notes add -m "Ready for testing on all MCPs" <commit-hash>
+git push origin claude/worker-1-kz0ycj
+git push origin refs/notes/commits
+```
 
-**Impact:** All Week 1 work becomes accessible on any device with git pull.
+### Machine B (PC or Another Mac)
+```bash
+git pull origin claude/worker-1-kz0ycj
+git fetch origin refs/notes/commits:refs/notes/commits
+git log --notes -3
+# See the message from Machine A
+```
+
+---
+
+## Troubleshooting
+
+### "Permission denied (publickey)"
+SSH key not added to GitHub. Run step 2-3 above.
+
+### "Could not read Username"
+Credentials helper is looking for stored token. Switch to SSH (Step 4).
+
+### "Upstream branch not found"
+Track the correct branch:
+```bash
+git branch -u origin/claude/worker-1-kz0ycj
+```
+
+### "Detached HEAD"
+You checked out a commit instead of the branch. Reattach:
+```bash
+git checkout claude/worker-1-kz0ycj
+```
+
+---
+
+## Reference
+
+- [SSH key setup on GitHub](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
+- [Git notes documentation](https://git-scm.com/docs/git-notes)
+- [GitHub CLI](https://cli.github.com)

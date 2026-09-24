@@ -1,151 +1,214 @@
 # Continue MCP Architecture
 
-**Status:** Configured (awaiting credentials)  
-**Last Updated:** 2026-09-22  
-**Location:** `~/.continue/config.yaml`
+**Status:** 2026-09-24 — Verified on macOS with Continue 2.0.0  
+**Location:** Secrets in `~/.continue/.env`; server definitions in `config/continue/mcpServers/`
 
 ---
 
-## Overview
+## How Continue Loads MCP Servers and Secrets
 
-Continue (VS Code extension) is configured with 6 MCP servers for autonomous AI capabilities:
+### Secret Expansion
+Continue expands secrets **only** as `${{ secrets.NAME }}`. Lookup order (first match wins):
+1. `~/.continue/.env`
+2. `<workspace>/.continue/.env`
+3. `<workspace>/.env`
+4. VS Code process environment
 
-| MCP | Purpose | Status | Credential Required |
-|-----|---------|--------|-------------------|
-| **Airtable** | Inventory & database operations | ⏳ Awaiting token | AIRTABLE_TOKEN |
-| **Slack** | Team communications & channels | ⏳ Awaiting token | SLACK_BOT_TOKEN, SLACK_TEAM_ID |
-| **Notion** | Documentation & databases | ⏳ Awaiting token | NOTION_TOKEN |
-| **Google Workspace** | Gmail, Calendar, Drive | ⏳ Awaiting token | GOOGLE_CREDENTIALS_PATH |
-| **Make** | Automation workflows | ⏳ Awaiting token | MAKE_API_KEY, MAKE_TEAM_ID |
-| **Web Search** | Internet search | ✅ Ready | None |
+**Important:** Plain `${VAR}` in YAML is NOT expanded (passed literally to the server). `.env.local` is NEVER read.
+
+### Server Loading
+`mcpServers` is a **list**. Block files in `~/.continue/mcpServers/` and `<workspace>/.continue/mcpServers/` are auto-loaded as YAML blocks with `name`, `version`, and `schema`. MCP tools appear in Agent mode.
 
 ---
 
-## Architecture
+## MCP Server Reference Table
 
-### Config File
-- **Location:** `~/.continue/config.yaml`
-- **Format:** YAML
-- **MCPs:** Defined in `mcpServers` array
-- **Auth:** All use environment variables (`${VAR_NAME}`)
+| Server | Package | Secret Names | Status |
+|--------|---------|--------------|--------|
+| Notion | `npx -y @notionhq/notion-mcp-server@2.5.2` | `NOTION_TOKEN` | Ready when secret set |
+| Airtable | `npx -y airtable-mcp-server@1.14.0` | `AIRTABLE_API_KEY` | Ready when secret set |
+| Slack | `npx -y slack-mcp-server@1.3.0 --transport stdio` | `SLACK_MCP_XOXB_TOKEN` (bot) or `SLACK_MCP_XOXP_TOKEN` (user) | Ready when secret set; startup fails if token is invalid |
+| Time | `uvx mcp-server-time` | (none) | Active (no credentials) |
 
-### Credential Sources
-Create `~/.continue/.env.local` with:
+**Count:** 4 working servers. 24 Notion tools, 16 Airtable tools (read scopes always; write scopes optional), Slack varies by token type, 2 time tools.
+
+---
+
+## Setup Steps
+
+### 1. Create and Fill `~/.continue/.env`
 
 ```bash
-# Copy from ~/.continue/.env.example and fill in actual values
-AIRTABLE_TOKEN=pat_...
-SLACK_BOT_TOKEN=xoxb_...
-SLACK_TEAM_ID=T_...
-NOTION_TOKEN=ntn_...
-GOOGLE_CREDENTIALS_PATH=/Users/premeftpllc/.continue/google-credentials.json
-MAKE_API_KEY=sk_live_...
-MAKE_TEAM_ID=...
-MAKE_API_URL=https://us2.make.com/api/v2
+touch ~/.continue/.env
+chmod 600 ~/.continue/.env
 ```
 
-### MCP Server Details
+Edit with:
+```
+NOTION_TOKEN=ntn_<your-internal-integration-secret>
+AIRTABLE_API_KEY=pat<your-personal-access-token>
+SLACK_MCP_XOXB_TOKEN=xoxb-<your-bot-token>
+```
 
-#### Airtable
-- **Package:** `@airtable/mcp-cli`
-- **Token:** PAT from https://airtable.com/account/tokens
-- **Scopes:** `data.records:read`, `data.records:write`, `schema.bases:read`
-- **Use In Continue:** `@airtable list bases`
+**Never include these in git or `.gitignore` exceptions.**
 
-#### Slack
-- **Package:** `slack-mcp-server`
-- **Tokens:** Bot token (xoxb-...) + Team ID
-- **Setup:** https://api.slack.com/apps → Create New App → OAuth & Permissions
-- **Scopes:** channels:history, channels:read, chat:write, groups:read, im:read, users:read
-- **Use In Continue:** `@slack list channels`
+### 2. Run VS Code Tasks
 
-#### Notion
-- **Package:** `@notionhq/notion-mcp-server`
-- **Token:** Internal Integration Secret from https://www.notion.so/my-integrations
-- **Setup:** Create integration → Share pages/databases with it
-- **Use In Continue:** `@notion search pages`
+1. Open PremeOS workspace in VS Code
+2. Run **Terminal → Run Task → PremeOS: Check Continue MCP**
+   - Verifies ~/.continue/.env and checks which servers are ready
+3. Run **Terminal → Run Task → PremeOS: Enable ready MCP servers**
+   - Copies each ready server block into ~/.continue/mcpServers/
+4. Run **Developer: Reload Window**
 
-#### Google Workspace
-- **Package:** `@gongrzhe/server-gmail-autoauth-mcp`
-- **Credentials:** OAuth JSON file
-- **Setup:** 
-  1. https://console.cloud.google.com → create project
-  2. Enable Gmail API, Calendar API, Drive API
-  3. Credentials → Create OAuth 2.0 Desktop App → Download JSON
-  4. Save as `~/.continue/google-credentials.json`
-- **First Run:** Opens browser for OAuth authorization, caches token locally
-- **Use In Continue:** `@google search emails`, `@google list events`
+### 3. Use Agent Mode
 
-#### Make
-- **Package:** `make-custom-mcp`
-- **Tokens:** API Key + Team ID from https://us2.make.com
-- **Setup:** Profile → API → Create new key
-- **Use In Continue:** `@make list scenarios`
-
-#### Web Search
-- **Package:** `web-search-mcp-server`
-- **Credentials:** None required
-- **Use In Continue:** `@web-search find information about X`
+In the Continue chat input, choose **Agent** in the mode selector. MCP tools are offered to the model only in Agent mode; the model calls them itself (they are not @-mentions). Continue asks before running a tool unless you change that tool's policy.
 
 ---
 
-## Activation Checklist
+## Credential How-Tos
 
-- [ ] Create `~/.continue/.env.local`
-- [ ] Fill in AIRTABLE_TOKEN
-- [ ] Fill in SLACK_BOT_TOKEN and SLACK_TEAM_ID
-- [ ] Fill in NOTION_TOKEN
-- [ ] Place `google-credentials.json` at `~/.continue/google-credentials.json`
-- [ ] Fill in MAKE_API_KEY, MAKE_TEAM_ID
-- [ ] Restart Continue (close/reopen VS Code)
-- [ ] Go to Continue → Tools to verify all MCPs show ✅
+### Notion Internal Integration
+1. Go to https://www.notion.so/my-integrations
+2. Click "New integration"
+3. Name it; select workspace; click "Create"
+4. Copy the **Internal Integration Secret** (ntn_...)
+5. Share individual pages/databases with the integration
+
+The integration sees only the pages and databases shared with it (page menu, **Connections**).
+
+### Airtable PAT (Personal Access Token)
+1. Go to https://airtable.com/create/tokens (or account settings)
+2. Click "Create new token"
+3. Name: "PremeOS MCP"
+4. Add scopes:
+   - `schema.bases:read` (list bases)
+   - `data.records:read` (read records) — must-have
+   - `data.records:write` (optional; write records)
+5. Click "Create"; copy the token
+
+**Scopes:** If write operations are needed, add `data.records:write`. The server reports errors for missing scopes.
+
+### Slack Token
+**Bot token (xoxb-):** For posting/reading as the app
+1. Go to https://api.slack.com/apps
+2. Create or select an app
+3. OAuth & Permissions: add the **Bot Token Scopes** listed in the slack-mcp-server README (read scopes such as `channels:history`, `channels:read`, `users:read`; add `chat:write` only if you enable posting)
+4. Install the app, then copy the **Bot User OAuth Token** (xoxb-...)
+5. Invite the bot to each channel it should read: `/invite @<bot-name>`
+
+**User token (xoxp-):** set `SLACK_MCP_XOXP_TOKEN` instead when you need search, unreads or channels the bot is not in. Change the block's `env` key to match.
+
+**WARNING:** xoxe- refresh tokens do NOT work. If you have xoxe-, reinstall the Slack app to get a fresh xoxb-.
 
 ---
 
-## Testing MCPs
+## Next steps (not configured yet)
 
-Once credentials are activated:
+| Service | Package / endpoint | Secrets / auth | Blocker / owner action |
+|---------|-------------------|----------------|------------------------|
+| Gmail | @klodr/gmail-mcp v1.3.3 | `GMAIL_OAUTH_PATH` (path to gcp-oauth.keys.json) | OAuth via `npx @klodr/gmail-mcp auth --scopes=<scope>`; BLOCKED until the Gmail API is enabled in the Google Cloud project (2026-09-22 report) |
+| Google Calendar | @cocal/google-calendar-mcp v2.6.3 | `GOOGLE_OAUTH_CREDENTIALS` (path to gcp-oauth.keys.json) | Browser OAuth flow or `npx @cocal/google-calendar-mcp auth`; tokens expire in 7 days (test mode) |
+| Google Drive | @piotr-agier/google-drive-mcp v2.11.0 | Credentials at ~/.config/google-drive-mcp/gcp-oauth.keys.json (no env var) | `npx @piotr-agier/google-drive-mcp auth`; the PC reports it times out when launched by Continue (unsolved) |
+| Shopify | shopify-mcp v1.0.8 | `SHOPIFY_CLIENT_ID` + `SHOPIFY_CLIENT_SECRET` (OAuth preferred) OR `SHOPIFY_ACCESS_TOKEN` + `MYSHOPIFY_DOMAIN` | OAuth 2.0 setup required; can pass via env or command-line |
+| Zapier | (Hosted at account URL, not npm) | `ZAPIER_MCP_URL` (unique per account from https://mcp.zapier.com/) | No auth needed; URL endpoint serves as credential |
+| Make | (Hosted at https://<MAKE_ZONE>/mcp, e.g., us2.make.com/mcp) | `MAKE_ZONE` + `MCP_TOKEN` OR OAuth | Bearer token auth; ~146 tools, ~40k tokens; PC bridge needs `@modelcontextprotocol/sdk` install (owner consent) |
+| Web search (local) | premeftpllc/web-search-mcp fork | (none) | Repo not created; PC build exists but not transferred |
 
-```
-@airtable list bases
-@slack list channels
-@notion search workspace
-@google get recent emails
-@make list scenarios
-@web-search find Claude documentation
-```
+**Tool use:** Gemma-4 does NOT auto-detect tool support via the lmstudio rule for `google/gemma-4-e2b`, but `capabilities: [tool_use]` in config.yaml enables it. Added to ~/.continue/config.yaml and copied to config/continue.local.yaml.
+
+---
+
+## Packages That Do Not Work
+
+These package names are invalid or not servers; they will fail to start:
+- `@airtable/mcp-cli` — a CLI, exits code 2, not a server
+- `@airtable/mcp-server` — nonexistent on npm
+- `@anthropic-ai/gmail-mcp-server` — nonexistent
+- `make-custom-mcp` — nonexistent
+- `notion-mcp` — nonexistent
+- `@modelcontextprotocol/server-git` — nonexistent
+- `@modelcontextprotocol/server-slack` — deprecated
+
+**Use the verified packages listed in the Server Reference Table above.**
+
+---
+
+## Mac and PC
+
+### Shared Across Devices (via git)
+- Which servers exist and their npm package names and startup args
+- Continue rules, make tool-filter list, docs
+
+### Kept Local on Each Machine
+- Secrets in `~/.continue/.env` (never committed)
+- Model choice (Gemma on Mac, Qwen/Nemotron on PC)
+- Absolute paths and machine-specific environment
+
+### Architecture
+Canonical per-server block files live in `config/continue/mcpServers/premeos-*.yaml` (secret-free, shared via git). Each machine keeps secrets in `~/.continue/.env`. The task `python3 scripts/workspace.py mcp --apply` copies a block into `~/.continue/mcpServers/` only when all its secrets are present.
+
+### GitHub Branch Conflict
+- `origin/main` = PC's `C:\Users\Administrator\.continue` folder (Windows paths, Qwen/Nemotron model, unrelated history)
+- `claude/worker-1-kz0ycj` = PremeOS workspace (this branch)
+
+**Never merge main into the workspace branch.** The PC's configuration is incompatible with macOS.
+
+### PC Adoption (Pending Owner Decision)
+The PC can use the same blocks by pulling this branch, putting its values in `%USERPROFILE%\.continue\.env` with the names above, and running `python scripts/workspace.py mcp --apply`, then retiring its launchers. Not done: it changes the PC setup and the "PC is master" rule, and Windows may need `npx` wrapped as `cmd /c npx` (untested).
+
+### PC Setup Kit on `main`
+Commit `414a828` on `origin/main` adds `MACBOOK_NEO_SETUP.md`, `.env.local.example` (names only, no values) and `config.mac.example.yaml`. Its premise that `${{ secrets.NAME }}` needs a Continue Hub login is wrong for Continue 2.0.0: local configs resolve secrets from `~/.continue/.env` (verified in the installed extension code and live on this Mac). Use this guide instead of its two-copy `.env.local` launcher scheme. Its per-service findings (Slack, Airtable, Gmail, Calendar/Drive key shape, Shopify variable names) agree with this guide.
 
 ---
 
 ## Troubleshooting
 
-### MCP not showing in Tools
-- Restart VS Code completely (Cmd+Q, reopen)
-- Check `~/.continue/config.yaml` syntax (must be valid YAML)
-- Verify environment variables are set
+### Literal `${VAR}` in Server Config
+**Problem:** Server config shows `${{ secrets.TOKEN }}` but server fails to start.  
+**Solution:** Check if YAML was edited with old syntax `${TOKEN}`. Continue does not expand `${VAR}` — only `${{ secrets.NAME }}`.
 
-### "Token not found" error
-- Verify `~/.continue/.env.local` exists with correct variable names
-- Restart VS Code
-- Check file permissions: `chmod 600 ~/.continue/.env.local`
+### `.env.local` Not Being Read
+**Problem:** Set variables in `.env.local` but servers don't start.  
+**Solution:** Continue reads `~/.continue/.env`, not `.env.local`. Rename or use the correct file.
 
-### Google OAuth fails
-- Ensure `google-credentials.json` path is correct in `.env.local`
-- First run opens browser for OAuth—complete authorization
-- Token is cached locally at `~/.continue/tokens.json` (don't commit)
+### Slack Server Fails at Startup
+**Problem:** MCP panel shows error, server listed as unavailable.  
+**Solution:** Verify `SLACK_MCP_XOXB_TOKEN` or `SLACK_MCP_XOXP_TOKEN` is set and valid. If you have an xoxe- refresh token, reinstall the Slack app to get a fresh xoxb-.
 
----
+### Unresolved Secrets or Malformed Blocks
+**Note (from reading the Continue 2.0.0 code):** Unresolved secrets and malformed YAML blocks cause per-block errors, not whole-config failure. Continue skips the affected block (or leaves the literal `${{ secrets.NAME }}` unresolved) and continues loading other blocks. This is why block activation only happens when secrets exist.
 
-## Files
-
-| File | Purpose |
-|------|---------|
-| `~/.continue/config.yaml` | MCP server definitions (architecture) |
-| `~/.continue/.env.example` | Template for credentials |
-| `~/.continue/.env.local` | Actual credentials (git-ignored) |
-| `~/.continue/google-credentials.json` | Google OAuth JSON file |
-| `~/.continue/tokens.json` | Cached OAuth tokens (auto-generated) |
+### Check Continue Output and MCP Panel
+1. **View → Output**, then choose **Continue** in the dropdown
+2. In the Continue panel, open settings and check the MCP/Tools section for each server's status
+3. Run **PremeOS: Check Continue MCP** for missing secrets, stale copies and literal `${VAR}` warnings
 
 ---
 
-**Reference:** See `~/.continue/.env.example` for credential format and where to obtain them.
+## Rollback
+
+Backups are stored in `~/.continue/backups/mcp-fix-<timestamp>/`. To restore:
+
+The 2026-09-24 change is backed up in `~/.continue/backups/mcp-fix-20260924-130833/` (old `config.yaml`, `.env.example`, and the removed `mcpServers/config.yaml` and `mcpServers/README.md`).
+
+```bash
+B="$HOME/.continue/backups/mcp-fix-20260924-130833"
+rm -f ~/.continue/mcpServers/premeos-*.yaml
+cp "$B/config.yaml" ~/.continue/config.yaml
+cp "$B/mcpServers/"* ~/.continue/mcpServers/
+# Then run Developer: Reload Window
+```
+
+This restores the previous (non-working) configuration exactly. Repo changes are reverted with git.
+
+---
+
+## Reference
+
+- [Continue documentation](https://docs.continue.dev)
+- Notion: https://www.npmjs.com/package/@notionhq/notion-mcp-server
+- Airtable: https://www.npmjs.com/package/airtable-mcp-server
+- Slack: https://www.npmjs.com/package/slack-mcp-server (korotovsky; not the deprecated `@modelcontextprotocol/server-slack`)
+- Time: https://pypi.org/project/mcp-server-time/

@@ -1,0 +1,14 @@
+name: PremeOS Slack
+version: 1.0.0
+schema: v1
+mcpServers:
+  - name: slack
+    command: npx
+    args:
+      - "-y"
+      - "slack-mcp-server@1.3.0"
+      - "--transport"
+      - "stdio"
+    # Read-only by default; posting needs SLACK_MCP_ADD_MESSAGE_TOOL. Use SLACK_MCP_XOXP_TOKEN instead for search.
+    env:
+      SLACK_MCP_XOXB_TOKEN: "${{ secrets.SLACK_MCP_XOXB_TOKEN }}"

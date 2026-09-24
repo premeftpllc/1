@@ -54,6 +54,33 @@
       }
     },
     {
+      "label": "PremeOS: Check Continue MCP",
+      "type": "process",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/scripts/workspace.py",
+        "mcp"
+      ],
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "PremeOS: Enable ready MCP servers",
+      "type": "process",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/scripts/workspace.py",
+        "mcp",
+        "--apply"
+      ],
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
       "label": "PremeOS: Start LM Studio server",
       "type": "process",
       "command": "${env:HOME}/.lmstudio/bin/lms",
