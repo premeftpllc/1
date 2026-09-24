@@ -99,23 +99,15 @@
       }
     },
     {
-      "label": "PremeOS: Load local model (131K)",
-      "type": "process",
-      "command": "${env:HOME}/.lmstudio/bin/lms",
-      "args": [
-        "load",
-        "google/gemma-4-e2b",
-        "--context-length",
-        "131072",
-        "--parallel",
-        "4",
-        "--identifier",
-        "google/gemma-4-e2b",
-        "--yes"
-      ],
+      "label": "PremeOS: Load local model (Nemotron 32K)",
+      "type": "shell",
+      "command": "\"$HOME/.lmstudio/bin/lms\" ps | grep -q nvidia/nemotron-3-nano-4b || \"$HOME/.lmstudio/bin/lms\" load nvidia/nemotron-3-nano-4b --context-length 32768 --parallel 1 --identifier nvidia/nemotron-3-nano-4b -y",
       "problemMatcher": [],
       "options": {
         "cwd": "${workspaceFolder}"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
       }
     },
     {

@@ -12,7 +12,8 @@ import urllib.error
 import urllib.request
 
 BASE = "http://127.0.0.1:1235"
-MODEL = "google/gemma-4-e2b"
+MODEL = "nvidia/nemotron-3-nano-4b"
+CONTEXT = 32768
 EMBED = "text-embedding-nomic-embed-text-v1.5"
 ROOT = Path(__file__).resolve().parents[1]
 CONTINUE_HOME = Path.home() / ".continue"
@@ -118,9 +119,9 @@ def main():
         for item in request("/api/v0/models")["data"]:
             if item["id"] == MODEL:
                 context = item.get("loaded_context_length")
-                print(f"Gemma: {item.get('state')}; loaded context: {context}")
-                if context and context != 131072:
-                    print("NOTE: expected 131072 context; unload Gemma while idle, then run the load task.")
+                print(f"{MODEL}: {item.get('state')}; loaded context: {context}")
+                if context and context != CONTEXT:
+                    print(f"NOTE: expected {CONTEXT} context; run the Load local model task (parallel 1 fits 8 GB).")
         print("Availability does not prove inference; run chat and embedding tests separately.")
     elif action == "chat":
         result = request("/v1/chat/completions", {
