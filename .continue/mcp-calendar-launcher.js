@@ -9,7 +9,14 @@ function loadEnv(filePath) {
   if (!fs.existsSync(filePath)) return;
   for (const line of fs.readFileSync(filePath, 'utf8').split(/\r?\n/)) {
     const match = line.match(/^\s*([^#\s][^=]*)=(.*)$/);
-    if (match) process.env[match[1].trim()] = match[2];
+    // Only fill from .env.local when the var is unset OR is an unexpanded template.
+    // Continue passes single-brace ${VAR} (and unresolved ${{ secrets.X }}) through as
+    // LITERAL text, which is truthy - so a plain `||` guard would keep the garbage.
+    // A real value (e.g. resolved from ${{ secrets.X }} via ~/.continue/.env) wins.
+    if (match) {
+      const k = match[1].trim(), cur = process.env[k];
+      if (!cur || /^\$\{\{?/.test(cur)) process.env[k] = match[2];
+    }
   }
 }
 
