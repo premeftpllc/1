@@ -1,0 +1,4 @@
+# SOPS-encrypted files: never let git rewrite line endings (CRLF on Windows would
+# alter the ciphertext file and can break decryption). Treat as opaque bytes.
+secrets/** -text
+.sops.yaml text eol=lf
