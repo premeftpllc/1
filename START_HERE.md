@@ -171,3 +171,22 @@ Free read-only store data, no quota cost and no auth:
 - Do not commit `config.yaml` or any `.env.local`.
 - Do not build order-fulfilment automation at 0.5 orders/month.
 - Do not make irreversible or bulk changes to the live store without the owner's explicit OK.
+
+---
+
+## 9. If Continue shows no models / no MCP servers on the Mac
+
+`config.mac.yaml` was **deleted on 2026-09-24** because it carried every bug that caused this
+exact symptom on the Windows box. If you find a copy, do not use it. Its faults were:
+top-level `modelRoles:` and `settings:` blocks (neither is a real ConfigYaml v2.0.0 field),
+invalid model roles (`refactor`/`rewrite`/`explain`/`docs`), launcher paths missing the nested
+`.continue/` segment, `~` in `args` (Node does not expand it), `${VAR}` interpolation that
+Continue never expands, `airtable` wired as a stdio launcher when it must be
+`type: streamable-http`, and `SHOPIFY_SHOP_URL` instead of `MYSHOPIFY_DOMAIN`.
+
+Continue fails its own schema validation **silently** and falls back to empty state rather than
+showing an error — so a blank Models/Tools tab almost always means a config schema violation,
+not a credential or network problem.
+
+**Use `config.mac.example.yaml` as the only starting point.** Copy it to `config.yaml`, replace
+`/Users/YOUR_USERNAME/` with your real home path, and paste the four literal secrets it marks.
