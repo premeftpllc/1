@@ -94,7 +94,7 @@ calls — 288% of the cap before doing real work. This is what killed the pipeli
 | Make `6299332` interval 300s to **21600s** | Left inactive; also `isinvalid: true` independently. |
 | Make `6373383` SNKRS scraper | **Deactivated.** It was creating ACTIVE products daily. |
 | 4 SNKRS scraper products | **Archived.** 0 `$0` ACTIVE products remain. |
-| `config.yaml` | Untracked + gitignored. Holds live secrets; can never be tracked (see section 6). |
+| `config.yaml` | Untracked + gitignored because it currently holds **literal** secrets. It *could* be tracked if switched to `${{ secrets.X }}` + `~/.continue/.env` — see section 9. |
 | Airtable quota | **Recovered** — returns 200, not 429. Monthly reset. |
 
 ## 5. Next actions, in priority order
