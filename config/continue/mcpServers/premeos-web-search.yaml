@@ -1,0 +1,9 @@
+name: PremeOS Web Search
+version: 1.0.0
+schema: v1
+mcpServers:
+  - name: web-search
+    # DuckDuckGo; no API key, no headless browser. 3 tools (about 4.7 KB of schema).
+    command: uvx
+    args:
+      - "duckduckgo-mcp-server@0.7.0"

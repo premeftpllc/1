@@ -1,0 +1,8 @@
+name: PremeOS Zapier
+version: 1.0.0
+schema: v1
+mcpServers:
+  - name: zapier
+    # Per-account Zapier MCP URL (https://mcp.zapier.com/api/mcp/s/<key>/mcp); the URL is the credential.
+    type: streamable-http
+    url: "${{ secrets.ZAPIER_MCP_URL }}"

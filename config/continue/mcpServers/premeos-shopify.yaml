@@ -1,0 +1,15 @@
+name: PremeOS Shopify
+version: 1.0.0
+schema: v1
+mcpServers:
+  - name: shopify
+    # Live store (premeftp). Includes write tools: keep them on "Ask first"; no bulk or
+    # irreversible store changes without the owner's explicit OK.
+    command: npx
+    args:
+      - "-y"
+      - "shopify-mcp@1.0.8"
+    env:
+      MYSHOPIFY_DOMAIN: "${{ secrets.MYSHOPIFY_DOMAIN }}"
+      SHOPIFY_CLIENT_ID: "${{ secrets.SHOPIFY_CLIENT_ID }}"
+      SHOPIFY_CLIENT_SECRET: "${{ secrets.SHOPIFY_CLIENT_SECRET }}"

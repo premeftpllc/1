@@ -29,8 +29,12 @@ Continue expands secrets **only** as `${{ secrets.NAME }}`. Lookup order (first 
 | Airtable | `npx -y airtable-mcp-server@1.14.0` | `AIRTABLE_API_KEY` | Ready when secret set |
 | Slack | `npx -y slack-mcp-server@1.3.0 --transport stdio` | `SLACK_MCP_XOXB_TOKEN` (bot) or `SLACK_MCP_XOXP_TOKEN` (user) | Ready when secret set; startup fails if token is invalid |
 | Time | `uvx mcp-server-time` | (none) | Active (no credentials) |
+| Web search | `uvx duckduckgo-mcp-server@0.7.0` | (none) | Active; 3 tools, search verified live 2026-09-24 |
+| Make | `streamable-http` `https://us2.make.com/mcp`, header `Authorization: Bearer` | `MAKE_MCP_AUTHORIZATION` | Added 2026-09-24; about 146 tools (~40K tokens), so switch it off in Continue > Tools when not needed. The token is due for rotation. |
+| Zapier | `streamable-http` url from secret | `ZAPIER_MCP_URL` | Added 2026-09-24; confirm it connects in Continue > Tools |
+| Shopify | `npx -y shopify-mcp@1.0.8` | `MYSHOPIFY_DOMAIN`, `SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET` | Added 2026-09-24; live store with write tools, so keep "Ask first"; confirm it connects in Continue > Tools |
 
-**Count:** 4 working servers. 24 Notion tools, 16 Airtable tools (read scopes always; write scopes optional), Slack varies by token type, 2 time tools.
+**Count:** 8 servers configured (Google Drive intentionally excluded: 128 tools, about 34K tokens). Gmail and Calendar are pending OAuth. 24 Notion tools, 16 Airtable tools (read scopes always; write scopes optional), Slack varies by token type, 2 time tools.
 
 ---
 
