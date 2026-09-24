@@ -232,3 +232,47 @@ Mac's remaining blocker is purely the three secret values in `~/.continue/.env`,
 missing the nested `.continue/` segment, `~` inside `args`, and `SHOPIFY_SHOP_URL` instead of
 `MYSHOPIFY_DOMAIN`. Continue fails schema validation **silently** and falls back to empty state,
 so blank tabs almost always mean a malformed config, not a credential problem.
+
+### TRAP: do not "fix" the launchers with `||` (verified 2026-09-24)
+
+`config.yaml` contains **14 single-brace `${VAR}` entries**. Continue never expands these, so it
+passes the **literal text** (e.g. `"${SHOPIFY_ACCESS_TOKEN}"`) into the spawned process env.
+
+Three launchers - `mcp-shopify-launcher.js`, `mcp-calendar-launcher.js`, `mcp-drive-launcher.js` -
+load `.env.local` and overwrite unconditionally:
+
+```js
+if (match) process.env[match[1].trim()] = match[2];   // unconditional
+```
+
+A tempting "fix" is `process.env[k] = process.env[k] || match[2]` so that `${{ secrets.X }}` would
+win. **Do not apply that.** The literal string `"${SHOPIFY_ACCESS_TOKEN}"` is truthy, so the fix
+would keep the garbage and never load the real credential - breaking Shopify, Calendar and Drive.
+
+Any correct version must treat an unexpanded template as unset, e.g.:
+
+```js
+const k = match[1].trim(), cur = process.env[k];
+if (!cur || /^\$\{\{?/.test(cur)) process.env[k] = match[2];
+```
+
+**Are the 14 dead entries harmful today? No - tested, not assumed.** The `??`-style launchers
+(slack, gmail, airtable, zapier, notion, make) all read variable names that are *not* among the 14,
+and the overwrite-style launchers clobber them regardless. Verified empirically: injecting
+`SLACK_BOT_TOKEN='${SLACK_BOT_TOKEN}'` still yields a healthy 15-tool handshake, because that
+launcher prefers `SLACK_USER_TOKEN`, which config.yaml does not set. So they are misleading, not
+broken - leave them unless you are adopting `${{ secrets.X }}`, in which case remove them in the
+same change as the launcher fix.
+
+### Verified server health (raw stdio handshake, 2026-09-24)
+
+9 of 10 healthy, ~353 tools: clock, web-search, make (150), notion (24), gmail (10),
+google-calendar (13), **google-drive (128)**, shopify (14), slack (15).
+The `airtable` stdio launcher is **orphaned by design** - config.yaml reaches Airtable over
+`type: streamable-http`, so that launcher failing is expected, not a bug.
+`google-drive` works perfectly over stdio but still times out *through Continue* - that remains the
+one open connector issue, and it is a Continue-integration problem, not a server problem.
+
+> When probing `slack`, `gmail` or `airtable`, run from the **VS Code workspace folder**. Those
+> three resolve `.env.local` relative to CWD, so probing from `~/.continue/.continue/` reports a
+> false failure.
