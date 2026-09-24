@@ -1,3 +1,5 @@
+> **⚠ SUPERSEDED - NOT A SOURCE OF TRUTH (marked 2026-09-24).** This document contains stale and, in places, fabricated status claims from earlier sessions. For verified state see `START_HERE.md` in `~/.continue` (repo premeftpllc/1, branch main). Always prefer a live tool call over any markdown file.
+
 # Git Consolidation Complete
 
 **Master Repository:** C:\Users\Administrator\.continue
