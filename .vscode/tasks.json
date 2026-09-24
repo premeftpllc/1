@@ -93,6 +93,9 @@
       "problemMatcher": [],
       "options": {
         "cwd": "${workspaceFolder}"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
       }
     },
     {

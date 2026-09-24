@@ -21,8 +21,5 @@ models:
     provider: lmstudio
     model: AUTODETECT
     apiBase: http://localhost:1235/v1/
-
-# MCP servers are loaded from block files in ~/.continue/mcpServers/.
-# Source of truth: PremeOS repo config/continue/mcpServers/ (secret-free).
-# Secrets: ~/.continue/.env, referenced from blocks as secrets.NAME inside a dollar-double-brace template.
-# Activate ready blocks: python3 ~/PremeOS/1/scripts/workspace.py mcp --apply
+    capabilities:
+      - tool_use
