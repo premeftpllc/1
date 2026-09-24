@@ -1,3 +1,7 @@
+# ⚠ PC-SIDE REFERENCE ONLY — NOT FOR THE MACBOOK NEO.
+#   The Mac has its own verified setup: branch claude/worker-1-kz0ycj, commit 096404d,
+#   config/continue/mcpServers/, guide docs/CONTINUE-MCP-ARCHITECTURE.md. See START_HERE.md section 9.
+
 name: Nemotron-3-Nano-4B Master Config (macOS / MacBook Neo)
 version: 1.0.0
 schema: v1
@@ -5,17 +9,20 @@ schema: v1
 # ---------------------------------------------------------------------------
 # HOW SECRETS ACTUALLY WORK HERE  (read this before editing)
 #
-# Continue v2.0.0 does NOT expand ${VAR} in mcpServers[].env. Its template
-# regex only matches double-brace ${{ secrets.NAME }} (Continue Hub secrets).
-# A plain ${VAR} is passed through as a LITERAL STRING and will not work.
+# Continue v2.0.0 does NOT expand ${VAR}. But ${{ secrets.NAME }} DOES work locally:
+# resolved from ~/.continue/.env (then <ws>/.continue/.env, <ws>/.env, process env).
+# NO Continue Hub login required - verified in LocalPlatformClient.findSecretInEnvFiles.
 #
 # Also, the MCP stdio transport does not inherit your shell environment. On
 # macOS it forwards only a small allowlist (PATH, HOME, USER, TMPDIR, ...).
 # Custom vars like NOTION_TOKEN are never inherited automatically.
 #
-# So there are exactly two ways to supply a credential:
-#   1. Paste the literal value into this file's env: block, or
-#   2. Put it in a .env.local that the launcher script loads ITSELF.
+# So there are three ways to supply a credential, PREFERRED FIRST:
+#   1. ${{ secrets.NAME }} here + the value in ~/.continue/.env  <-- USE THIS.
+#      Keeps this file secret-free and therefore safe to commit.
+#   2. Paste the literal value into this file's env: block (then NEVER commit it).
+#   3. Put it in a .env.local that the launcher script loads ITSELF
+#      (a separate mechanism from Continue's own secret resolution).
 #
 # Which .env.local a launcher reads depends on how it resolves the path:
 #   __dirname-relative  -> ~/.continue/.continue/.env.local
@@ -72,20 +79,20 @@ mcpServers:
     args: ["/Users/YOUR_USERNAME/.continue/.continue/mcp-make-bridge.js"]
     env:
       # This bridge ONLY reads MAKE_MCP_AUTHORIZATION. Literal value required.
-      MAKE_MCP_AUTHORIZATION: "PASTE_MAKE_MCP_AUTHORIZATION_UUID_HERE"
+      MAKE_MCP_AUTHORIZATION: "${{ secrets.MAKE_MCP_AUTHORIZATION }}"
 
   - name: notion
     command: node
     args: ["/Users/YOUR_USERNAME/.continue/.continue/mcp-notion-launcher.js"]
     env:
-      NOTION_TOKEN: "PASTE_NOTION_INTERNAL_INTEGRATION_TOKEN_HERE"
+      NOTION_TOKEN: "${{ secrets.NOTION_TOKEN }}"
 
   - name: airtable
     # NOT a stdio server. @airtable/mcp-cli is a CLI wrapper, not a server.
     # Use Airtable's hosted endpoint directly.
     type: streamable-http
     url: https://mcp.airtable.com/mcp
-    apiKey: "PASTE_AIRTABLE_PERSONAL_ACCESS_TOKEN_HERE"
+    apiKey: "${{ secrets.AIRTABLE_API_KEY }}"
 
   - name: slack
     command: node
@@ -122,4 +129,4 @@ mcpServers:
   - name: zapier
     type: streamable-http
     # From Zapier's "Other" generic-client connect option; token is in the URL.
-    url: "PASTE_ZAPIER_MCP_URL_WITH_TOKEN_HERE"
+    url: "${{ secrets.ZAPIER_MCP_URL }}"

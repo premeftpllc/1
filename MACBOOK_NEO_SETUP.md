@@ -11,9 +11,23 @@ through Continue — unresolved, low priority.
 
 ## 0. The one thing to understand first
 
-**Continue v2.0.0 does NOT expand `${VAR}` in `mcpServers[].env`.** Its template regex only
-matches `${{ secrets.NAME }}` (Continue Hub secrets, which need a hub.continue.dev login).
+> **SUPERSEDED 2026-09-24 — this file is a PC-side reference, NOT for the MacBook Neo.**
+> The Mac already has a working, verified setup on branch `claude/worker-1-kz0ycj`
+> (commit `096404d`, `config/continue/mcpServers/`, guide `docs/CONTINUE-MCP-ARCHITECTURE.md`).
+> See `START_HERE.md` §9. Do not clone `main` into `~/.continue` on the Mac.
+
+**Continue v2.0.0 does NOT expand `${VAR}` in `mcpServers[].env`.** Its template regex
+(`TEMPLATE_VAR_REGEX = /\${{[\s]*([^}\s]+)[\s]*}}/g`) only matches the double-brace form.
 A plain `${VAR}` is passed through as a literal string and silently fails.
+
+**CORRECTION:** an earlier version of this file said `${{ secrets.NAME }}` requires a
+hub.continue.dev login. **That is wrong.** Verified in the installed extension
+(`out/extension.js`, `LocalPlatformClient.findSecretInEnvFiles`), Continue resolves it locally,
+in this order: **`~/.continue/.env`** → `<workspace>/.continue/.env` → `<workspace>/.env` →
+process env (`SecretType.LocalEnv`). No Hub account involved.
+
+**So the preferred pattern is `${{ secrets.NOTION_TOKEN }}` in `config.yaml` with the value in
+`~/.continue/.env`** — `config.yaml` then contains no secrets and is safe to track.
 
 On top of that, the MCP stdio transport does not inherit your shell environment — it forwards
 only a small allowlist (`PATH`, `HOME`, `USER`, `TMPDIR`, …). `NOTION_TOKEN` will never arrive

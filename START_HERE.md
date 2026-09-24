@@ -174,19 +174,61 @@ Free read-only store data, no quota cost and no auth:
 
 ---
 
-## 9. If Continue shows no models / no MCP servers on the Mac
+## 9. MacBook Neo — the Mac is ALREADY FIXED. Do not follow the PC setup.
 
-`config.mac.yaml` was **deleted on 2026-09-24** because it carried every bug that caused this
-exact symptom on the Windows box. If you find a copy, do not use it. Its faults were:
-top-level `modelRoles:` and `settings:` blocks (neither is a real ConfigYaml v2.0.0 field),
-invalid model roles (`refactor`/`rewrite`/`explain`/`docs`), launcher paths missing the nested
-`.continue/` segment, `~` in `args` (Node does not expand it), `${VAR}` interpolation that
-Continue never expands, `airtable` wired as a stdio launcher when it must be
-`type: streamable-http`, and `SHOPIFY_SHOP_URL` instead of `MYSHOPIFY_DOMAIN`.
+**Superseded 2026-09-24 by the Mac session.** Two things this file previously said were wrong;
+both are corrected here.
 
-Continue fails its own schema validation **silently** and falls back to empty state rather than
-showing an error — so a blank Models/Tools tab almost always means a config schema violation,
-not a credential or network problem.
+### The Mac has its own working setup — use it
 
-**Use `config.mac.example.yaml` as the only starting point.** Copy it to `config.yaml`, replace
-`/Users/YOUR_USERNAME/` with your real home path, and paste the four literal secrets it marks.
+The MacBook Neo config was repaired and verified live (Continue parsed it with no schema errors
+and is running an MCP server from it). It lives on:
+
+- repo `premeftpllc/1`, branch **`claude/worker-1-kz0ycj`**, commit **`096404d`**
+- folder **`config/continue/mcpServers/`** (secret-free blocks)
+- guide **`docs/CONTINUE-MCP-ARCHITECTURE.md`**
+
+**Do NOT clone `main` into `~/.continue` on the Mac**, and do NOT run
+`cp config.mac.example.yaml config.yaml`. That would install Windows `C:/` paths and reference
+`nvidia/nemotron-3-nano-4b`, which **is not installed on the Mac** (it has `google/gemma-4-e2b`
+and `qwen3-4b-toolcalling-codex`, fixed at 131,072 context). `config.mac.example.yaml` is a
+**PC-side reference only — not for the MacBook Neo.**
+
+### CORRECTION: `${{ secrets.NAME }}` works locally, with no Hub login
+
+Earlier versions of this file and `MACBOOK_NEO_SETUP.md` claimed `${{ secrets.NAME }}` requires a
+hub.continue.dev login and that secrets therefore had to be literal in `config.yaml`. **That is
+wrong.** Verified by reading the installed extension
+(`.vscode/extensions/continue.continue-2.0.0-*/out/extension.js`, `LocalPlatformClient`):
+
+```js
+async findSecretInEnvFiles(fqsn) {
+  const secretValue = this.findSecretInLocalEnvFile(fqsn)      // ~/.continue/.env
+    ?? await this.findSecretInWorkspaceEnvFiles(fqsn, true)    // <ws>/.continue/.env
+    ?? await this.findSecretInWorkspaceEnvFiles(fqsn, false);  // <ws>/.env
+  ... secretType: SecretType.LocalEnv
+```
+
+So the correct pattern is `${{ secrets.NOTION_TOKEN }}` in `config.yaml` plus the value in
+**`~/.continue/.env`**. `config.yaml` then holds **no secrets at all** and is safe to track.
+
+Still true: plain `${VAR}` is never expanded (`TEMPLATE_VAR_REGEX = /\${{[\s]*([^}\s]+)[\s]*}}/g`
+only matches the double-brace form), and the *launcher scripts* separately load their own
+`.env.local` — a different mechanism from Continue's secret resolution.
+
+### Mac packages that are verified working (by stdio handshake)
+
+- `@notionhq/notion-mcp-server@2.5.2` — `NOTION_TOKEN` (24 tools)
+- `airtable-mcp-server@1.14.0` — **`AIRTABLE_API_KEY`** (16 tools). `@airtable/mcp-cli` is a CLI, not a server.
+- `slack-mcp-server@1.3.0 --transport stdio` — **`SLACK_MCP_XOXB_TOKEN`**, must be an `xoxb-` token.
+
+Mac's remaining blocker is purely the three secret values in `~/.continue/.env`, then
+`python3 scripts/workspace.py mcp --apply`.
+
+### Why a blank Models/Tools tab still means "schema violation"
+
+`config.mac.yaml` was deleted 2026-09-24 — it carried top-level `modelRoles:`/`settings:` blocks
+(neither is a real field), invalid roles (`refactor`/`rewrite`/`explain`/`docs`), launcher paths
+missing the nested `.continue/` segment, `~` inside `args`, and `SHOPIFY_SHOP_URL` instead of
+`MYSHOPIFY_DOMAIN`. Continue fails schema validation **silently** and falls back to empty state,
+so blank tabs almost always mean a malformed config, not a credential problem.
