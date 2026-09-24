@@ -6,4 +6,4 @@
 # hardcoded `/` silently matches neither on Windows ("no matching creation rules").
 creation_rules:
   - path_regex: secrets.*\.env$
-    age: age1p4tglv0wmhs9jx7f5h5z49p2hyqtqsdvzq6xdhndyv0j2a4jlcsstlsv0z
+    age: age1p4tglv0wmhs9jx7f5h5z49p2hyqtqsdvzq6xdhndyv0j2a4jlcsstlsv0z,age1ejegjy9myh9sx6y9tkfw56ht266v0y5jee2a493ancrpzye3wa9szs9e07
