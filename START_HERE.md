@@ -289,3 +289,28 @@ one open connector issue, and it is a Continue-integration problem, not a server
 > When probing `slack`, `gmail` or `airtable`, run from the **VS Code workspace folder**. Those
 > three resolve `.env.local` relative to CWD, so probing from `~/.continue/.continue/` reports a
 > false failure.
+
+### Correction and findings, 2026-09-24 (later) - live calls, not handshakes
+
+The "9 of 10 healthy" figure above counted **handshakes** (tools/list). Real read-only calls tell a
+different story for two of them:
+
+| Server | Handshake | Real call | Fix (owner) |
+|---|---|---|---|
+| gmail | 10 tools | **fails**: "Gmail API has not been used in project 851326606267 before or it is disabled" | Enable Gmail API in GCP project **851326606267** |
+| google-calendar | 13 tools | **fails**: same error for the Google Calendar API | Enable the Calendar API in the same project |
+| zapier | ok | only **1 tool** (`get_configuration_url`): no actions are enabled | Enable actions in the Zapier MCP config |
+| make | was 150 tools | now **42** | Fixed in `a77a0d5` |
+
+- **The project NUMBER is authoritative.** The OAuth client id starts with `851326606267`.
+  `GOOGLE_PROJECT_ID` in the synced secrets says `prem-330719`, which setup notes describe as a
+  different, inaccessible account's project - treat that value as stale.
+- **Google tokens:** calendar `tokens.json` written 2026-09-23, gmail `credentials.json` 2026-09-22,
+  both with refresh tokens. If the OAuth consent screen is still in **Testing** mode, Google expires
+  those refresh tokens 7 days after issue (around 2026-09-29/30).
+- **Make bridge bug (fixed):** it read its filter from `join(__dirname, "..", "..", ".continue", ...)`,
+  which after the folder consolidation points at a file that does not exist; the loader fails open,
+  so Continue silently exposed all ~150 Make tools. The 42-tool subset still includes 13
+  write-capable tools (e.g. scenarios_delete, scenarios_run) - an owner decision.
+- **Zapier endpoint** is `https://mcp.zapier.com/api/v1/connect?token=...` - streamable HTTP with a
+  session id, neither `/sse` nor `/mcp`.
