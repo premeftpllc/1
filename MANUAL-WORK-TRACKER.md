@@ -7,39 +7,37 @@
 ## 🔴 MANUAL TASKS — Complete When Ready
 
 ### 1. Make.com Scenario 5774991 Restoration
-**Status:** 🔴 PENDING  
+**Status:** ⚠️ NEEDS VERIFICATION / LIKELY STALE  
 **Priority:** HIGH  
-**Time:** 5 minutes  
-**Instructions:**
-1. Go to https://make.com
-2. Open Scenario 5774991 (PremeOS — Intelligence — Opportunity Processing)
-3. Click Tools → Export/Import
-4. Import the blueprint from `/Users/premeftpllc/PremeOS/1/final-complete-blueprint.json`
-5. Click Save and verify 7 modules load
-6. **Completion:** Update this tracker to ✅
+**Time:** TBD (blocked on owner decision)  
+**Finding (2026-09-24):**
+- Scenario 5774991 is inactive at a 14400s interval (verified live)
+- Previous import failures: Gemini 503, OpenAI 400 errors (not size-related)
+- PC briefing (START_HERE.md) recommends: **do not replay the parked DLQ execution**
+- Do not import anything until the owner decides on next steps
 
-**Why:** Scenario was truncated at 54KB due to API limits. Manual import bypasses the size limit.
+**Why:** Failed imports indicate a logic or configuration issue beyond size limits. DLQ execution contains the error context needed for diagnosis.
 
 ---
 
-### 2. Continue MCP Credential Setup
-**Status:** 🔴 PENDING  
+### 2. Continue MCP Secret Sync (Mac Setup)
+**Status:** 🔴 BLOCKED  
 **Priority:** MEDIUM  
-**Time:** 10 minutes  
-**Instructions:**
-1. Create `~/.continue/.env` with correct variable names:
-   ```bash
-   NOTION_TOKEN=ntn_<your-internal-integration-secret>
-   AIRTABLE_API_KEY=pat<_or_ucl_><your-pat>
-   SLACK_MCP_XOXB_TOKEN=xoxb-<your-bot-token>
-   ```
-2. Run **Terminal → Run Task → PremeOS: Check Continue MCP**
-3. Run **Terminal → Run Task → PremeOS: Enable ready MCP servers**
-4. Run **Developer: Reload Window**
-5. Toggle Agent mode in Continue and test: `@notion`, `@airtable`, `@slack`
-6. **Completion:** Update this tracker to ✅
+**Time:** < 5 minutes (once PC adds Mac key)  
+**Current Status (2026-09-24):**
+- Mac has its own age key (public key: age1ejegjy9myh9sx6y9tkfw56ht266v0y5jee2a493ancrpzye3wa9szs9e07)
+- Public key posted on Notion; it's safe
+- **BLOCKED:** Waiting for PC to add Mac public key to `.sops.yaml` and run `sops updatekeys`, then push
 
-**Why:** MCP servers are disabled until secrets are available. The task copies ready servers into ~/.continue/mcpServers/ when all variables are set.
+**Instructions (once PC pushes):**
+1. Run VS Code task **PremeOS: Sync MCP secrets**
+   - Decrypts PC's encrypted file (origin/main secrets/premeos.env, 16 vars) into `~/.continue/.env`
+   - Enables Notion, Airtable, Slack MCP servers
+   - Never prints secret values; warns if Slack token isn't a real `xoxb-`
+2. Run **Developer: Reload Window**
+3. Toggle Agent mode in Continue and test: `@notion`, `@airtable`, `@slack`
+
+**Why:** Secrets now come from PC's SOPS+age encrypted file. Mac syncs via a one-way decryption; no private key leaves the Mac. See docs/CONTINUE-MCP-ARCHITECTURE.md for details.
 
 ---
 
@@ -47,6 +45,12 @@
 **Status:** ⏸️ BLOCKED  
 **Priority:** HIGH (blocks Tier 2)  
 **Timeline:** Resets 2026-10-01  
+**Verified (2026-09-24):**
+- Free plan: 1,000 API calls/workspace/month (~33/day)
+- Shared quota: Make, Zapier, MCP, and repo scripts all count against the same limit
+- Single metadata call returned HTTP 200 on 2026-09-24 — service operational
+- Rules: never poll, never test against Airtable, batch writes 10/request max
+
 **Instructions:**
 1. Wait for 2026-10-01 (monthly quota reset)
 2. Then execute Tier 2 Remediation (22.5 hours of DQ fixes)
@@ -88,45 +92,43 @@
 ---
 
 ### 6. Fix Invalid JSON — SCENARIO_5901509_MODULE_SPECIFICATIONS.json
-**Status:** 🔴 PENDING  
-**Priority:** MEDIUM  
-**Time:** 5 minutes  
-**Instructions:**
-1. Open `SCENARIO_5901509_MODULE_SPECIFICATIONS.json` around line 318 (`records_array`)
-2. Replace the raw line breaks inside the Make `{{ map(...) }}` template string with `\n` (or collapse to one line)
-3. Verify: `python3 scripts/workspace.py validate` passes
-4. **Completion:** Update this tracker to ✅
+**Status:** ✅ DONE  
+**Completed:** 2026-09-24 (commit 096404d)
+**Also completed:** Continue config repair (same commit)
 
-**Why:** The "PremeOS: Validate JSON" VS Code task fails on this file — JSON strings can't contain literal newlines.
+**Why:** The "PremeOS: Validate JSON" VS Code task failed on this file — JSON strings can't contain literal newlines. Now fixed.
 
 ---
 
-### 7. Create Repo `.env.local`
-**Status:** 🔴 PENDING  
+### 7. Repo `.env.local` Setup
+**Status:** ⏸️ CONDITIONAL  
 **Priority:** MEDIUM  
-**Time:** 10 minutes  
-**Instructions:**
+**Updated (2026-09-24):**
+- **Continue MCP now supersedes this:** Continue reads `~/.continue/.env` (from SOPS+age sync), not repo `.env.local`
+- **Keep `.env.local` only if** repo scripts (e.g., query-airtable-inventory.js) need credentials
+- **Warning:** query-airtable-inventory.js burns Airtable quota — never use for tests
+
+**Instructions (if needed):**
 1. `cp .env.example .env.local` in `/Users/premeftpllc/PremeOS/1`
 2. Fill in OpenRouter, Airtable, Make, Notion, Slack, Google values
 3. Confirm it's ignored: `git check-ignore .env.local` (already covered by `.gitignore`)
 4. **Completion:** Update this tracker to ✅
 
-**Why:** No `.env.local` exists yet; scripts/MCPs reading repo env vars have no credentials.
+**Why:** Determine if repo scripts actually need `.env.local` or if they should use the Airtable MCP instead.
 
 ---
 
 ### 8. Verify Local AI Stack (LM Studio)
-**Status:** 🔴 PENDING  
+**Status:** ⏸️ ON HOLD  
 **Priority:** LOW  
-**Time:** 5 minutes  
-**Instructions:**
-1. Run VS Code task **PremeOS: Start LM Studio server** (port 1235)
-2. Run **PremeOS: Load local model (131K)**
-3. Run **PremeOS: Check local AI** — should pass
-4. Watch Activity Monitor → Memory Pressure; if it goes red, lower `--context-length` or `--parallel`
-5. **Completion:** Update this tracker to ✅
+**Owner Decision Required:** Model selection (target: nvidia/nemotron-3-nano-4b, not yet installed)
+**Current Status (2026-09-24):**
+- LM Studio server was not running
+- No model loaded
+- Owner will switch Mac to nvidia/nemotron-3-nano-4b
+- Setup blocked on owner's model choice and installation
 
-**Why:** Health check currently fails (server not running). MacBook Neo has 8 GB RAM, so a 131K context with 4 parallel slots may be tight.
+**Why:** Health check fails (server not running). MacBook Neo has 8 GB RAM, so a 131K context with 4 parallel slots may be tight. Wait for owner to install the target model.
 
 ---
 
@@ -152,6 +154,7 @@
 | Task | Date | Status |
 |------|------|--------|
 | MacBook Neo Dev Environment Setup (brew tools, git defaults, zsh) | 2026-09-24 | ✅ DONE |
+| Fix Invalid JSON (SCENARIO_5901509_MODULE_SPECIFICATIONS.json) + Continue config repair | 2026-09-24 | ✅ DONE |
 | Continue MCP Architecture Setup | 2026-09-22 | ✅ DONE |
 | Notion Task Archiving (6 tasks) | 2026-09-22 | ✅ DONE |
 | Phase 2 Execution (DQ-NEW-01) | 2026-09-14 | ✅ DONE |
@@ -189,16 +192,15 @@
 
 ### ⏸️ Make Scenario Health Check
 **Status:** BLOCKED
-**Blocker:** Insufficient admin permissions (organization view required)
-**Impact:** Cannot list scenarios or execution status without org-level access
-**Resolution:** User account needs admin role upgrade or different API credentials
-**Why:** User needs to grant admin access or use service account credentials
+**Blocker:** Awaiting owner decision on scenario audit scope and methodology
+**Impact:** Cannot determine full scenario health status without decision
+**Resolution:** Define scope and approve audit plan before proceeding
+**Note (2026-09-24):** Verified that task 5774991 is inactive at 14400s interval; requires owner review before any actions
 
-### ⏸️ Notion Workspace Sync
-**Status:** PARTIALLY BLOCKED
-**Issue:** Notion page fetch requires valid page ID/URL; stored URL references invalid
-**Work Done:** Attempted to locate workspace checkpoint pages
-**Next:** User must provide Notion workspace URL or specific page ID for execution checkpoint
+### ✅ Notion Workspace Sync
+**Status:** OPERATIONAL
+**Verified (2026-09-24):** Successful Notion reads/writes confirmed on "2026-09-24 · Continue.dev (Mac)" page and MCP Configuration pages
+**Updates Applied:** Continue MCP architecture documented, secret sync procedures recorded
 **Why:** Keep Notion 100% up to date with Phase 2 completion and system audit findings
 
 ---
@@ -208,8 +210,8 @@
 | Task | Status | Impact | Notes |
 |------|--------|--------|-------|
 | Gmail operational audit | ✅ COMPLETE | All financial & shipping data retrieved | Comprehensive 30-day history captured |
-| Make scenario audit | ⏸️ BLOCKED | Cannot assess scenario health | Admin permissions required |
-| Notion checkpoint sync | ⏸️ BLOCKED | Cannot update Notion | Need valid workspace URL |
+| Make scenario audit | ⏸️ BLOCKED | Cannot assess scenario health | Awaiting owner decision on audit scope; 5774991 verified inactive |
+| Notion checkpoint sync | ✅ OPERATIONAL | Notion stays 100% synced | Reads/writes verified 2026-09-24 |
 
 ---
 
@@ -218,10 +220,70 @@
 | System | Status | Operational? | Details |
 |--------|--------|---------------|---------|
 | Gmail | ✅ Connected | YES | Search/query functional; retrieved 20+ recent messages with operational data |
-| Airtable | ⏸️ BLOCKED | NO | API quota exceeded (429); reset 2026-10-01 |
-| Notion | ⚠️ Partial | MAYBE | Tool connected but page lookup blocked; needs valid page ID |
-| Make | ⏸️ BLOCKED | NO | Insufficient admin permissions for org-level access |
+| Airtable | ⏸️ BLOCKED | NO | API quota exceeded; reset 2026-10-01; free plan 1,000 calls/month (~33/day) shared by Make, Zapier, MCP |
+| Notion | ✅ Connected | YES | Reads/writes verified 2026-09-24; "2026-09-24 · Continue.dev (Mac)" and MCP Configuration pages synced |
+| Make | ⏸️ BLOCKED | NO | Awaiting owner decision on scenario 5774991 audit scope (verified inactive at 14400s interval) |
 | Shopify | ⏸️ BLOCKED | NO | OAuth expired; requires user re-authentication |
+
+---
+
+## 🔐 Security Queue (Owner)
+
+**Status:** ⏸️ AWAITING OWNER ACTION  
+**Priority:** HIGH (affects credential rotation cycle)  
+**Timeline:** Complete after current Make/SNKRS work stabilizes  
+
+### Rotation Required (Secrets expire after rotation; each machine re-syncs)
+
+1. **Make MCP Token**
+   - **Location:** Plaintext on Notion page "MCP Configuration Sync - Windows to Mac"; also in encrypted secrets file (origin/main secrets/premeos.env)
+   - **Action:** Generate new token in Make; update Notion and PC's secrets file
+   - **Sync:** PC re-encrypts; Mac and PC both run "PremeOS: Sync MCP secrets"
+
+2. **Google/YouTube Data API Key**
+   - **Current:** Hardcoded in Make scenario 5901110 modules 9 and 11
+   - **Action:** Generate new key in GCP console; edit modules in Make UI (not via scenarios_update)
+   - **Remove:** From Notion page "Worker 1 — PremeOS Deep Audit Final Report — 2026-08-22"
+   - **Sync:** PC re-encrypts secrets/premeos.env; each machine re-syncs
+
+3. **GCP Service Account Key**
+   - **Current:** premeos@premeos.iam.gserviceaccount.com key found in dangling, never-pushed PC commit
+   - **Action:** Revoke in GCP console (Keys & credentials)
+   - **Verify:** Confirm key is not in use anywhere (completed audit 2026-08-22 found it dangling)
+
+4. **Post-Rotation Sync**
+   - **PC:** Re-encrypt secrets/premeos.env with SOPS (sops updatekeys not needed)
+   - **Mac & PC:** Each runs VS Code task "PremeOS: Sync MCP secrets"
+   - **Verify:** All MCP servers remain operational
+
+---
+
+## 📦 Store (Owner, Production)
+
+**Status:** 🟡 IN PROGRESS  
+**Priority:** HIGH (ranked in PC briefing START_HERE.md §5)  
+**Owner Decision Required:** SNKRS scraper 6373383 final approval  
+
+### SKUs → Listings → Store Pass → SNKRS Decision
+
+**Order (from PC briefing):**
+1. ✅ SKU Import (reports/2026-09-24-sku-import-check.md) — CSV readiness verified; header must include Option1 Name/Value or it deletes variant options
+2. ⏳ eBay + Grailed Listings (listings/2026-09-24/README.md) — Generate listings from 88 buyable products (101 total, 101 variants, 0 SKU-enabled)
+3. ⏳ 30-Minute Shopify Admin Pass — Duplicate seon.io app; fix tax-inclusive pricing; export orders
+4. ⏳ Navigation/Footer Fixes — Store appearance polish
+5. ⏳ SNKRS Scraper 6373383 — **Awaiting owner decision** (is scraper active? Continue? Pause?)
+
+### Shopify Store Status (2026-09-24, VERIFIED)
+- **Public feed:** premeftp.shop/products.json?limit=250 → 101 published products, 101 variants
+- **Buyable:** 88 variants (all have inventory > 0)
+- **SKU Status:** 0 variants have SKU
+- **Order frequency:** 1 order in last 60 days (demand-constrained)
+- **API calls:** Airtable quota shared; never poll store, never test against store
+
+### False Claims Removed
+- **NOT $2,368 lifetime revenue** (unknown; not verified)
+- **NOT 44% refund rate** (unknown; not verified)
+- **NOT Make scenario 6371060 active** (not verified in live audit)
 
 ---
 
@@ -242,17 +304,18 @@
 | Blocker | Impact | Resolution | Timeline |
 |---------|--------|-----------|----------|
 | Airtable API Quota | Tier 2 Remediation blocked | Wait for reset | 2026-10-01 |
-| Make.com Scenario Truncation | Phase 5 incomplete | Manual import needed | User action |
-| MCP Credentials | Continue inactive | Fill ~/.continue/.env, run PremeOS: Enable ready MCP servers | User action |
+| Make Scenario 5774991 Audit | Decision needed on import/skip | Owner decides; DLQ holds error context | User action |
+| MCP Secret Sync (Mac) | Continue MCP inactive | PC adds Mac public key to .sops.yaml and pushes | PC action, then Mac task |
 
 ---
 
-## 🎯 PRIORITY QUEUE (After Manual Tasks)
+## 🎯 PRIORITY QUEUE (Next Steps)
 
-1. **Notion Workspace Sync** — Full status update (NOW)
-2. **PremeOS Documentation** — Keep EXECUTION_STATUS_CHECKPOINT.md current (NOW)
-3. **Phase 5 Verification** — After Make.com scenario restored
-4. **Tier 2 Execution** — After 2026-10-01 (Airtable quota reset)
+1. **PC Agent Task** — Add Mac public key (age1ejegjy9myh9sx6y9tkfw56ht266v0y5jee2a493ancrpzye3wa9szs9e07) to .sops.yaml, run `sops updatekeys`, and push — BLOCKS Mac MCP sync
+2. **Mac MCP Secret Sync** — Run task "PremeOS: Sync MCP secrets" once PC pushes (then reload VS Code)
+3. **Store Work** — SKU import → eBay/Grailed listings → 30-min Shopify admin pass (per PC briefing §5)
+4. **Security Rotations** — Make token, Google/YouTube key, GCP service account (after Make/SNKRS work stabilizes)
+5. **Tier 2 Execution** — After 2026-10-01 (Airtable quota reset)
 
 ---
 
