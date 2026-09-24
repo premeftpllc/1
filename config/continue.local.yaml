@@ -10,6 +10,13 @@ models:
       - tool_use
     roles:
       - chat
+  - name: Nemotron 3 Nano 4B (LM Studio)
+    provider: lmstudio
+    model: nvidia/nemotron-3-nano-4b
+    apiBase: http://localhost:1235/v1/
+    capabilities:
+      - tool_use
+    roles:
       - autocomplete
   - name: Nomic Embed Text (LM Studio)
     provider: lmstudio
