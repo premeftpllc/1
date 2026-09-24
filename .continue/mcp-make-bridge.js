@@ -18,11 +18,22 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const toolMode = process.env.MAKE_MCP_TOOL_MODE ?? "trim";
 let keepTools = null;
 if (toolMode !== "all") {
-  try {
-    const filters = JSON.parse(readFileSync(join(__dirname, "..", "..", ".continue", "mcp-tool-filters.json"), "utf8"));
-    keepTools = new Set(filters.make ?? []);
-  } catch {
-    keepTools = null; // filter file missing or unreadable: fail open to the full list
+  // Look next to this script first (~/.continue/.continue/), then the original location
+  // relative to web-search-mcp/scripts/ (continue-demo/.continue/). The live copy was moved
+  // during consolidation and silently lost its filter, exposing all ~150 Make tools.
+  const candidates = [
+    join(__dirname, "mcp-tool-filters.json"),
+    join(__dirname, "..", "..", ".continue", "mcp-tool-filters.json"),
+  ];
+  for (const file of candidates) {
+    try {
+      keepTools = new Set(JSON.parse(readFileSync(file, "utf8")).make ?? []);
+      break;
+    } catch {}
+  }
+  if (!keepTools) {
+    // stderr only - stdout is the MCP protocol channel and must stay clean
+    console.error("[make-bridge] WARNING: mcp-tool-filters.json not found; exposing the FULL Make tool list. Looked in: " + candidates.join(" | "));
   }
 }
 
