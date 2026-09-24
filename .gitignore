@@ -35,3 +35,7 @@ premeos-*.json
 
 # Continue config holds LITERAL secrets (v2.0.0 cannot read ${VAR} from env) - never track it
 config.yaml
+
+# SOPS: never commit plaintext secrets or the age private key
+.config/sops/
+secrets/*.plain

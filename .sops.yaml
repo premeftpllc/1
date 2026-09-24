@@ -1,0 +1,9 @@
+# SOPS config for PremeOS secret sync (PC <-> MacBook Neo).
+# Encrypted files may be committed. The age PRIVATE key must NEVER be.
+#
+# NOTE: path_regex uses `.` rather than a literal separator on purpose - Windows
+# passes `secrets\premeos.env` and macOS/Linux pass `secrets/premeos.env`, and a
+# hardcoded `/` silently matches neither on Windows ("no matching creation rules").
+creation_rules:
+  - path_regex: secrets.*\.env$
+    age: age1p4tglv0wmhs9jx7f5h5z49p2hyqtqsdvzq6xdhndyv0j2a4jlcsstlsv0z
