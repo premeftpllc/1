@@ -1,0 +1,55 @@
+HANDOFF 2026-09-24 · Continue.dev (Mac) · MCP config repaired, awaiting credentials
+Executor: Claude Code (Opus 5.5 lead + Haiku 4.5 workers), MacBook Neo, ~/PremeOS/1
+Notion Work Session: "2026-09-24 · Continue.dev (Mac) · MCP config repaired, awaiting credentials"
+
+COMPLETED
+- ~/.continue/config.yaml: removed broken mcpServers (3 nonexistent packages, ${VAR}
+  syntax Continue never expands); Gemma gets capabilities: [tool_use].
+- Removed invalid ~/.continue/mcpServers/{config.yaml,README.md} (map-form block).
+- MCP servers = secret-free blocks in config/continue/mcpServers/premeos-*.yaml;
+  `python3 scripts/workspace.py mcp [--apply]` activates a block only when its
+  secrets exist in ~/.continue/.env. VS Code tasks: "PremeOS: Check Continue MCP",
+  "PremeOS: Enable ready MCP servers".
+- ~/.continue/.env created (mode 600, comments only, no values).
+- Removed 5 broken templates; rewrote docs/CONTINUE-MCP-ARCHITECTURE.md; fixed
+  README, PC_SYNC, MANUAL-WORK-TRACKER, GIT_CROSS_DEVICE_SETUP; JSON validate fixed.
+
+VERIFIED
+- Continue 2.0.0 code: secrets only via ${{ secrets.NAME }}, read from
+  ~/.continue/.env > <ws>/.continue/.env > <ws>/.env > process env; .env.local
+  never read. lmstudio does not auto-detect tool use for gemma-4.
+- Live stdio handshakes: notion-mcp-server@2.5.2 (NOTION_TOKEN, 24 tools),
+  airtable-mcp-server@1.14.0 (AIRTABLE_API_KEY, 16 tools), mcp-server-time (2 tools).
+  slack-mcp-server@1.3.0 needs SLACK_MCP_XOXB_TOKEN + --transport stdio (auth at startup).
+- Continue loaded the new block live: uvx mcp-server-time running since 13:11:41.
+- No secrets in any git ref (all refs scanned).
+
+NOT CHANGED
+- LM Studio, model roles/context, PC config, origin/main, Notion tasks, any live
+  Make/Airtable/Shopify/Slack system. Nothing pushed.
+
+BLOCKED / NEEDS VERIFICATION
+- Notion/Airtable/Slack servers: no secret values on Mac. Needs owner to fill
+  ~/.continue/.env (names: NOTION_TOKEN, AIRTABLE_API_KEY, SLACK_MCP_XOXB_TOKEN;
+  Slack must be xoxb-, PC value is an xoxe. refresh token).
+- End-to-end tool call from Gemma in Agent mode: not yet observed.
+- Gmail (API disabled in GCP project), Make (146 tools ~40k tokens; bridge needs
+  SDK install = consent), Shopify, Zapier, Drive, web-search: not configured.
+
+CONFLICT (owner decision)
+- origin/main (PC ~/.continue) says Mac should clone main into ~/.continue and
+  accept all PC files; that would install C:/ paths and a missing model. Not done.
+- PC kit (414a828 MACBOOK_NEO_SETUP.md) assumes secrets need Continue Hub login:
+  false for 2.0.0. PC START_HERE.md handoff exists on the PC but is not pushed.
+
+SECURITY
+- Live Make MCP token is written in plain text on Notion page
+  "MCP Configuration Sync - Windows to Mac": rotate it, then delete it from the page.
+
+ROLLBACK
+- ~/.continue/backups/mcp-fix-20260924-130833/ (old config.yaml, .env.example,
+  mcpServers/*). Repo: git revert 096404d.
+
+NEXT ACTION: owner copies the 3 secrets into ~/.continue/.env, runs
+"PremeOS: Enable ready MCP servers", reloads window, tests one Notion read in Agent mode.
+NEXT EXECUTOR: Human (credentials), then Claude Code/Continue for the live test.
