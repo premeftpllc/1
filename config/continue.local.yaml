@@ -24,6 +24,12 @@ models:
     apiBase: http://localhost:1235/v1/
     roles:
       - embed
+  - name: Voyage Rerank-2
+    provider: voyage
+    model: rerank-2
+    apiKey: "${{ secrets.VOYAGE_API_KEY }}"
+    roles:
+      - rerank
   - name: Autodetect
     provider: lmstudio
     model: AUTODETECT
