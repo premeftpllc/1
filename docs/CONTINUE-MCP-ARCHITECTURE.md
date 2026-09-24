@@ -104,6 +104,15 @@ The integration sees only the pages and databases shared with it (page menu, **C
 
 ---
 
+## Secret sync between Mac and PC (SOPS + age)
+
+The PC keeps all MCP secrets encrypted in `secrets/premeos.env` on `origin/main` (SOPS, AES256-GCM; `.sops.yaml` lists the age recipients). Each machine has its **own** age key at `~/.config/sops/age/keys.txt` (mode 600). Private keys never leave their machine; only public keys (`age1...`) are shared.
+
+- Mac: run **PremeOS: Sync MCP secrets** (`python3 scripts/workspace.py secrets`). It fetches `origin/main`, decrypts to `~/.continue/.env` (mode 600, values never printed; the old file is replaced only when decryption succeeds), warns if the Slack value is not `xoxb-`, then runs `mcp --apply`. Reload the window afterwards.
+- Add a machine: `age-keygen -o ~/.config/sops/age/keys.txt`, give the public key (`age-keygen -y ~/.config/sops/age/keys.txt`) to an existing recipient, who adds it to `.sops.yaml` and runs `sops updatekeys secrets/premeos.env`, then commits and pushes.
+- Rotate a secret: edit it once on the PC with `sops secrets/premeos.env`, push, then sync on each machine.
+- Mac public key (2026-09-24): `age1ejegjy9myh9sx6y9tkfw56ht266v0y5jee2a493ancrpzye3wa9szs9e07`
+
 ## Next steps (not configured yet)
 
 | Service | Package / endpoint | Secrets / auth | Blocker / owner action |

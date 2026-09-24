@@ -2,9 +2,12 @@
 """PremeOS local checks; standard library only, no external service mutations."""
 import argparse
 import json
+import os
 from pathlib import Path
 import re
+import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.request
 
@@ -15,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTINUE_HOME = Path.home() / ".continue"
 MCP_BLOCKS = ROOT / "config" / "continue" / "mcpServers"
 MCP_ACTIVE = CONTINUE_HOME / "mcpServers"
+AGE_KEY = Path(os.environ.get("SOPS_AGE_KEY_FILE", Path.home() / ".config" / "sops" / "age" / "keys.txt"))
 SECRET = re.compile(r"\$\{\{\s*secrets\.([A-Za-z0-9_]+)\s*\}\}")
 PLAIN = re.compile(r"(?<!\$)\$\{(?!\{)[A-Za-z_][A-Za-z0-9_]*\}")
 
@@ -45,12 +49,53 @@ def env_names():
     return names
 
 
+def sync_secrets():
+    """Decrypt secrets/premeos.env from origin/main (SOPS + age) into ~/.continue/.env."""
+    if not AGE_KEY.exists():
+        raise ValueError(f"age key missing at {AGE_KEY}; see docs/CONTINUE-MCP-ARCHITECTURE.md.")
+    try:
+        subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin", "main"], check=True)
+        encrypted = subprocess.run(["git", "-C", str(ROOT), "show", "origin/main:secrets/premeos.env"],
+                                   check=True, capture_output=True).stdout
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "premeos.env"
+            source.write_bytes(encrypted)
+            plain = subprocess.run(["sops", "--decrypt", str(source)], check=True, capture_output=True,
+                                   env={**os.environ, "SOPS_AGE_KEY_FILE": str(AGE_KEY)}).stdout
+    except FileNotFoundError as error:
+        raise ValueError(f"{error.filename} not installed (macOS: brew install sops age).")
+    except subprocess.CalledProcessError as error:
+        detail = (error.stderr or b"").decode(errors="replace")
+        if "none were" in detail or "no master key" in detail.lower():
+            raise ValueError(f"this machine's age key is not a recipient of secrets/premeos.env yet; "
+                             f"add its public key (age-keygen -y {AGE_KEY}) to .sops.yaml on main, "
+                             "then run sops updatekeys there.")
+        lines = detail.strip().splitlines()
+        raise ValueError(f"{error.cmd[0]} failed: {lines[-1] if lines else error.returncode}")
+    target = CONTINUE_HOME / ".env"
+    staging = CONTINUE_HOME / ".env.sync"
+    CONTINUE_HOME.mkdir(exist_ok=True)
+    fd = os.open(staging, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "wb") as handle:
+        handle.write(plain)
+    os.replace(staging, target)
+    target.chmod(0o600)
+    names = env_names()
+    print(f"Wrote ~/.continue/.env from origin/main: {len(names)} variables (values not shown).")
+    slack = re.search(rb"^SLACK_MCP_XOXB_TOKEN=[\"']?(\S*)", plain, re.M)
+    if slack and not slack.group(1).startswith(b"xoxb-"):
+        print("WARN: SLACK_MCP_XOXB_TOKEN is not an xoxb- bot token; the Slack server will fail.")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["health", "chat", "embed", "validate", "mcp"])
+    parser.add_argument("action", choices=["health", "chat", "embed", "validate", "mcp", "secrets"])
     parser.add_argument("--apply", action="store_true", help="Apply ready MCP block files")
     args = parser.parse_args()
     action = args.action
+    if action == "secrets":
+        sync_secrets()
+        action, args.apply = "mcp", True
     if action == "validate":
         files = sorted(ROOT.glob("*.json")) + sorted((ROOT / ".vscode").glob("*.json"))
         files += sorted(ROOT.glob("*.code-workspace"))
