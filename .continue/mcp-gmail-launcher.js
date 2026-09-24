@@ -38,15 +38,10 @@ function getPersistentWindowsEnvironmentVariable(name) {
   }
 }
 
-const envLocal = loadEnvLocal();
-const serviceAccount =
-  process.env.GOOGLE_SERVICE_ACCOUNT_JSON ??
-  envLocal.GOOGLE_SERVICE_ACCOUNT_JSON ??
-  getPersistentWindowsEnvironmentVariable("GOOGLE_SERVICE_ACCOUNT_JSON");
-
-if (!serviceAccount) {
-  throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is not available to the Gmail MCP launcher.");
-}
+const oauthPath =
+  process.env.GMAIL_OAUTH_PATH ??
+  loadEnvLocal().GMAIL_OAUTH_PATH ??
+  "C:/Users/Administrator/.continue/.continue/gcp-oauth.keys.json";
 
 const command = process.platform === "win32" ? process.env.ComSpec || "cmd.exe" : "npx";
 const args =
@@ -55,7 +50,7 @@ const args =
     : ["-y", "@klodr/gmail-mcp"];
 
 const child = spawn(command, args, {
-  env: { ...process.env, GOOGLE_SERVICE_ACCOUNT_JSON: serviceAccount },
+  env: { ...process.env, GMAIL_OAUTH_PATH: oauthPath },
   stdio: "inherit",
   windowsHide: true,
 });

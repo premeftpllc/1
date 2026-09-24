@@ -1,0 +1,125 @@
+name: Nemotron-3-Nano-4B Master Config (macOS / MacBook Neo)
+version: 1.0.0
+schema: v1
+
+# ---------------------------------------------------------------------------
+# HOW SECRETS ACTUALLY WORK HERE  (read this before editing)
+#
+# Continue v2.0.0 does NOT expand ${VAR} in mcpServers[].env. Its template
+# regex only matches double-brace ${{ secrets.NAME }} (Continue Hub secrets).
+# A plain ${VAR} is passed through as a LITERAL STRING and will not work.
+#
+# Also, the MCP stdio transport does not inherit your shell environment. On
+# macOS it forwards only a small allowlist (PATH, HOME, USER, TMPDIR, ...).
+# Custom vars like NOTION_TOKEN are never inherited automatically.
+#
+# So there are exactly two ways to supply a credential:
+#   1. Paste the literal value into this file's env: block, or
+#   2. Put it in a .env.local that the launcher script loads ITSELF.
+#
+# Which .env.local a launcher reads depends on how it resolves the path:
+#   __dirname-relative  -> ~/.continue/.continue/.env.local
+#       shopify, zapier, google-calendar, google-drive
+#   CWD-relative        -> <VS Code workspace>/.continue/.env.local
+#       slack, gmail, airtable
+# Continue sets a spawned server's CWD to the open VS Code workspace folder.
+# Put the SAME .env.local in BOTH places and you never have to think about it.
+#
+# NEVER commit the filled-in version of this file. Real config.yaml is
+# gitignored for exactly this reason.
+# ---------------------------------------------------------------------------
+
+models:
+  - name: nemotron-3-nano-4b
+    provider: lmstudio
+    model: nvidia/nemotron-3-nano-4b
+    # LOCAL LM Studio on the MacBook:      http://127.0.0.1:1235/v1
+    # REMOTE LM Studio on the Windows box: http://192.168.1.25:1235/v1
+    apiBase: http://127.0.0.1:1235/v1
+    roles: [chat, autocomplete, edit, apply]
+    capabilities: [tool_use]
+    defaultCompletionOptions:
+      contextLength: 160000
+      maxTokens: 80000
+    requestOptions:
+      timeout: 300000
+
+  - name: Nomic Embed Text v1.5
+    provider: lmstudio
+    model: text-embedding-nomic-embed-text-v1.5
+    apiBase: http://127.0.0.1:1235/v1
+    roles: [embed]
+    requestOptions:
+      timeout: 300000
+
+mcpServers:
+  - name: web-search
+    command: node
+    args: ["/Users/YOUR_USERNAME/.continue/web-search-mcp/dist/index.js"]
+    env:
+      BROWSER_HEADLESS: "true"
+      BROWSER_TYPES: chromium
+      MAX_BROWSERS: "1"
+      DEFAULT_TIMEOUT: "30000"
+      MAX_CONTENT_LENGTH: "50000"
+
+  - name: clock
+    command: node
+    args: ["/Users/YOUR_USERNAME/.continue/.continue/mcp-clock.mjs"]
+
+  - name: make-custom-mcp
+    command: node
+    args: ["/Users/YOUR_USERNAME/.continue/.continue/mcp-make-bridge.js"]
+    env:
+      # This bridge ONLY reads MAKE_MCP_AUTHORIZATION. Literal value required.
+      MAKE_MCP_AUTHORIZATION: "PASTE_MAKE_MCP_AUTHORIZATION_UUID_HERE"
+
+  - name: notion
+    command: node
+    args: ["/Users/YOUR_USERNAME/.continue/.continue/mcp-notion-launcher.js"]
+    env:
+      NOTION_TOKEN: "PASTE_NOTION_INTERNAL_INTEGRATION_TOKEN_HERE"
+
+  - name: airtable
+    # NOT a stdio server. @airtable/mcp-cli is a CLI wrapper, not a server.
+    # Use Airtable's hosted endpoint directly.
+    type: streamable-http
+    url: https://mcp.airtable.com/mcp
+    apiKey: "PASTE_AIRTABLE_PERSONAL_ACCESS_TOKEN_HERE"
+
+  - name: slack
+    command: node
+    args: ["/Users/YOUR_USERNAME/.continue/.continue/mcp-slack-launcher.js"]
+    # Reads <workspace>/.continue/.env.local itself.
+    # Needs SLACK_USER_TOKEN (xoxp-, preferred) or SLACK_BOT_TOKEN (xoxb-).
+    # The underlying Go binary wants SLACK_MCP_XOXP_TOKEN / SLACK_MCP_XOXB_TOKEN;
+    # the launcher maps it for you.
+
+  - name: gmail
+    command: node
+    args: ["/Users/YOUR_USERNAME/.continue/.continue/mcp-gmail-launcher.js"]
+    # @klodr/gmail-mcp is OAuth-only (NOT service accounts).
+    # Needs gcp-oauth.keys.json in {installed:{...}} shape, then a one-time
+    # browser auth. See MACBOOK_NEO_SETUP.md step 6.
+
+  - name: google-calendar
+    command: node
+    args: ["/Users/YOUR_USERNAME/.continue/.continue/mcp-calendar-launcher.js"]
+
+  - name: google-drive
+    command: node
+    args: ["/Users/YOUR_USERNAME/.continue/.continue/mcp-drive-launcher.js"]
+    connectionTimeout: 60000
+
+  - name: shopify
+    command: node
+    args: ["/Users/YOUR_USERNAME/.continue/.continue/mcp-shopify-launcher.js"]
+    # Reads ~/.continue/.continue/.env.local itself (__dirname-relative).
+    # Needs MYSHOPIFY_DOMAIN + either SHOPIFY_ACCESS_TOKEN
+    # or SHOPIFY_CLIENT_ID + SHOPIFY_CLIENT_SECRET.
+    # NOTE: the old SHOPIFY_SHOP_URL name is wrong and is ignored.
+
+  - name: zapier
+    type: streamable-http
+    # From Zapier's "Other" generic-client connect option; token is in the URL.
+    url: "PASTE_ZAPIER_MCP_URL_WITH_TOKEN_HERE"

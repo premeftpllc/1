@@ -39,6 +39,11 @@ function getPersistentWindowsEnvironmentVariable(name) {
 }
 
 const envLocal = loadEnvLocal();
+const userToken =
+  process.env.SLACK_USER_TOKEN ??
+  envLocal.SLACK_USER_TOKEN ??
+  getPersistentWindowsEnvironmentVariable("SLACK_USER_TOKEN");
+
 const botToken =
   process.env.SLACK_BOT_TOKEN ??
   envLocal.SLACK_BOT_TOKEN ??
@@ -49,8 +54,8 @@ const teamId =
   envLocal.SLACK_TEAM_ID ??
   getPersistentWindowsEnvironmentVariable("SLACK_TEAM_ID");
 
-if (!botToken) {
-  throw new Error("SLACK_BOT_TOKEN is not available to the Slack MCP launcher.");
+if (!userToken && !botToken) {
+  throw new Error("Neither SLACK_USER_TOKEN nor SLACK_BOT_TOKEN is available to the Slack MCP launcher.");
 }
 
 if (!teamId) {
@@ -63,8 +68,16 @@ const args =
     ? ["/d", "/s", "/c", "npx.cmd -y slack-mcp-server"]
     : ["-y", "slack-mcp-server"];
 
+const authEnv = userToken
+  ? { SLACK_MCP_XOXP_TOKEN: userToken }
+  : { SLACK_BOT_TOKEN: botToken, SLACK_MCP_XOXB_TOKEN: botToken };
+
 const child = spawn(command, args, {
-  env: { ...process.env, SLACK_BOT_TOKEN: botToken, SLACK_TEAM_ID: teamId },
+  env: {
+    ...process.env,
+    ...authEnv,
+    SLACK_TEAM_ID: teamId,
+  },
   stdio: "inherit",
   windowsHide: true,
 });

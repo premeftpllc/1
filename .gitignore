@@ -27,3 +27,11 @@ Thumbs.db
 
 # Playwright
 .playwright-mcp/
+
+# OAuth/service-account credential files
+.continue/gcp-oauth.keys.json
+*.keys.json
+premeos-*.json
+
+# Continue config holds LITERAL secrets (v2.0.0 cannot read ${VAR} from env) - never track it
+config.yaml

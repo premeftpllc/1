@@ -21,7 +21,7 @@ function ensureOAuthKeys() {
   if (!clientId || !clientSecret || clientId.includes('YOUR_') || clientSecret.includes('YOUR_')) return;
 
   const keys = {
-    web: {
+    installed: {
       client_id: clientId,
       client_secret: clientSecret,
       redirect_uris: [redirectUri]
