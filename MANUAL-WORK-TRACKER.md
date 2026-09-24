@@ -1,5 +1,5 @@
 # Manual Work Tracker
-**Last Updated:** 2026-09-22  
+**Last Updated:** 2026-09-24  
 **Status:** Active — Compile all manual tasks requiring human action
 
 ---
@@ -60,10 +60,102 @@
 
 ---
 
+### 4. Enable macOS Firewall
+**Status:** 🔴 PENDING  
+**Priority:** HIGH  
+**Time:** 1 minute  
+**Instructions:**
+1. Run in Terminal (needs admin password):
+   ```bash
+   sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on
+   ```
+2. Verify: `/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate` → `enabled`
+3. **Completion:** Update this tracker to ✅
+
+**Why:** Dev environment scan (2026-09-24) found the application firewall disabled.
+
+---
+
+### 5. macOS 26.7 + Command Line Tools Update
+**Status:** 🔴 PENDING  
+**Priority:** MEDIUM  
+**Time:** ~30 minutes + restart  
+**Instructions:**
+1. System Settings → General → Software Update
+2. Install **macOS Tahoe 26.7**, **Safari 27.0**, and the newer **Command Line Tools for Xcode 26.6**
+3. Hold off on **macOS 27** until current Make/SNKRS work is stable
+4. Verify: `brew doctor` no longer warns about Command Line Tools
+5. **Completion:** Update this tracker to ✅
+
+**Why:** Pending security/tooling updates found in 2026-09-24 scan.
+
+---
+
+### 6. Fix Invalid JSON — SCENARIO_5901509_MODULE_SPECIFICATIONS.json
+**Status:** 🔴 PENDING  
+**Priority:** MEDIUM  
+**Time:** 5 minutes  
+**Instructions:**
+1. Open `SCENARIO_5901509_MODULE_SPECIFICATIONS.json` around line 318 (`records_array`)
+2. Replace the raw line breaks inside the Make `{{ map(...) }}` template string with `\n` (or collapse to one line)
+3. Verify: `python3 scripts/workspace.py validate` passes
+4. **Completion:** Update this tracker to ✅
+
+**Why:** The "PremeOS: Validate JSON" VS Code task fails on this file — JSON strings can't contain literal newlines.
+
+---
+
+### 7. Create Repo `.env.local`
+**Status:** 🔴 PENDING  
+**Priority:** MEDIUM  
+**Time:** 10 minutes  
+**Instructions:**
+1. `cp .env.example .env.local` in `/Users/premeftpllc/PremeOS/1`
+2. Fill in OpenRouter, Airtable, Make, Notion, Slack, Google values
+3. Confirm it's ignored: `git check-ignore .env.local` (already covered by `.gitignore`)
+4. **Completion:** Update this tracker to ✅
+
+**Why:** No `.env.local` exists yet; scripts/MCPs reading repo env vars have no credentials.
+
+---
+
+### 8. Verify Local AI Stack (LM Studio)
+**Status:** 🔴 PENDING  
+**Priority:** LOW  
+**Time:** 5 minutes  
+**Instructions:**
+1. Run VS Code task **PremeOS: Start LM Studio server** (port 1235)
+2. Run **PremeOS: Load local model (131K)**
+3. Run **PremeOS: Check local AI** — should pass
+4. Watch Activity Monitor → Memory Pressure; if it goes red, lower `--context-length` or `--parallel`
+5. **Completion:** Update this tracker to ✅
+
+**Why:** Health check currently fails (server not running). MacBook Neo has 8 GB RAM, so a 131K context with 4 parallel slots may be tight.
+
+---
+
+### 9. (Optional) Activate Xcode.app for Swift/iOS Work
+**Status:** ⚪ OPTIONAL  
+**Priority:** LOW  
+**Time:** 2 minutes  
+**Instructions:**
+1. Only needed if building Swift/iOS/macOS apps:
+   ```bash
+   sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+   sudo xcodebuild -license accept
+   ```
+2. Verify: `xcodebuild -version` → Xcode 26.6
+3. **Completion:** Update this tracker to ✅
+
+**Why:** Xcode 26.6 is installed but inactive — `xcode-select` points at Command Line Tools, so `xcodebuild` fails.
+
+---
+
 ## ✅ COMPLETED TASKS
 
 | Task | Date | Status |
 |------|------|--------|
+| MacBook Neo Dev Environment Setup (brew tools, git defaults, zsh) | 2026-09-24 | ✅ DONE |
 | Continue MCP Architecture Setup | 2026-09-22 | ✅ DONE |
 | Notion Task Archiving (6 tasks) | 2026-09-22 | ✅ DONE |
 | Phase 2 Execution (DQ-NEW-01) | 2026-09-14 | ✅ DONE |
