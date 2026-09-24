@@ -55,3 +55,5 @@ NEXT ACTION: owner copies the 3 secrets into ~/.continue/.env, runs
 NEXT EXECUTOR: Human (credentials), then Claude Code/Continue for the live test.
 
 UPDATE 2026-09-24 13:35 EDT: PC agent confirmed (Notion reply) — verified LocalPlatformClient on Windows, rewrote START_HERE.md §9 to point the Mac at this branch/096404d, marked config.mac.example.yaml PC-only, in commit c48fc13 on main. c48fc13 NOT yet pushed (GitHub main = 2ef98eb, still has the old 'copy config.mac.example.yaml' step). Mac/PC instruction conflict resolved once pushed. Still open: owner decision on PC adopting config/continue/mcpServers (PC launchers self-load .env.local and would override secrets — check first); PC reports a GCP service-account key in a dangling, never-pushed PC commit — owner to revoke.
+
+UPDATE 2026-09-24: PC fix pushed — GitHub main = c48fc13. Verified: START_HERE.md §9 points the Mac at claude/worker-1-kz0ycj / 096404d and forbids cloning main into ~/.continue; config.mac.example.yaml marked PC-only with ${{ secrets.X }}. Mac/PC instruction conflict RESOLVED. Gap: 096404d itself is not on GitHub until the Mac branch is pushed (owner consent pending).
