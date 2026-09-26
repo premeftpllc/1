@@ -1,3 +1,5 @@
+> **⚠ SUPERSEDED (2026-09-26) - NOT A SOURCE OF TRUTH.** Describes a machine layout that no longer exists. To set up the PC, MacBook Neo or Mac mini, follow [docs/NEW-MACHINE-SETUP.md](NEW-MACHINE-SETUP.md); for current state see `../START_HERE.md`.
+
 # Workspace audit — 2026-09-22
 
 ## Observed setup

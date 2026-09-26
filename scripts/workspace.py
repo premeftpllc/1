@@ -257,7 +257,7 @@ def main():
             text = path.read_text(encoding="utf-8") if path.exists() else ""
             if PLAIN.search(text):
                 print(f"WARN: {path.name} uses literal ${{VAR}}; Continue only expands secrets templates.")
-            if path == config and "mcpServers" in text:
+            if path == config and re.search(r"^mcpServers:", text, re.M):
                 print("WARN: ~/.continue/config.yaml defines mcpServers; they now come from the repo blocks.")
         if config.exists() and config.read_text(encoding="utf-8") != rendered_config():
             print("WARN: ~/.continue/config.yaml differs from the template; run `workspace.py config`.")

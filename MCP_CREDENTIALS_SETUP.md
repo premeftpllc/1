@@ -1,3 +1,5 @@
+> **⚠ SUPERSEDED (2026-09-26) - NOT A SOURCE OF TRUTH.** Describes a machine layout that no longer exists. To set up the PC, MacBook Neo or Mac mini, follow [docs/NEW-MACHINE-SETUP.md](docs/NEW-MACHINE-SETUP.md); for current state see `START_HERE.md`.
+
 # MCP Credentials Setup Guide
 
 **Status:** All MCPs configured and ready. Just add your credentials to `.env.local`

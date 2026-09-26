@@ -1,3 +1,5 @@
+> **⚠ SUPERSEDED (2026-09-26) - NOT A SOURCE OF TRUTH.** Describes a machine layout that no longer exists. To set up the PC, MacBook Neo or Mac mini, follow [docs/NEW-MACHINE-SETUP.md](docs/NEW-MACHINE-SETUP.md); for current state see `START_HERE.md`.
+
 # Continue + PremeOS MCP setup — MacBook Neo
 
 Mirrors the working Windows setup. Every gotcha below was hit and solved for real on the
