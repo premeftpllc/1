@@ -78,7 +78,8 @@ git log --oneline origin/main..claude/worker-1-kz0ycj   # anything listed was ne
 git checkout main && git pull --ff-only
 ```
 
-Work on `main` from now on (short-lived feature branches are fine; merge them back).
+Work on `main` from now on (short-lived feature branches are fine; merge them back). Optional, per clone:
+`git config blame.ignoreRevsFile .git-blame-ignore-revs` so `git blame` skips the one formatting-only commit.
 
 ## 3. Encryption key (age) — one per machine, private key never leaves it
 
@@ -143,10 +144,13 @@ counts only and masks secret values in any error text; **never print `~/.continu
 1. **File → Open Workspace from File… → `~/PremeOS/1/PremeOS.code-workspace`.**
 2. When VS Code asks about automatic tasks, allow them: they start the LM Studio server and load
    the model on folder open.
-3. **Developer: Reload Window.** In Continue: pick **PremeOS (Nemotron 3 Nano 4B, local LM
+3. Accept **Install** on the workspace extension recommendations (Continue, ESLint, Prettier,
+   Python, PowerShell; listed in `.vscode/extensions.json`). Prettier formats TypeScript/JavaScript on
+   save only inside `web-search-mcp` (the only folder with a Prettier config).
+4. **Developer: Reload Window.** In Continue: pick **PremeOS (Nemotron 3 Nano 4B, local LM
    Studio)**, switch to **Agent** mode, and check the Tools list shows the 8 servers and the Rules
    list shows 8 rules.
-4. Turn on **Settings Sync** (Accounts icon, bottom left) with the same account as the PC, so
+5. Turn on **Settings Sync** (Accounts icon, bottom left) with the same account as the PC, so
    personal settings and extensions follow you. The PC must have it on too.
 
 ## 8. Daily routine on any machine
