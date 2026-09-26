@@ -1,0 +1,53 @@
+{
+  "incident_id": "supremecommunity:drop:2026-09-10",
+  "received_timestamp": "2026-09-14T18:30:00Z",
+  "scenario_id": 5901509,
+  "blueprint_hash": "abcd1234ef5678",
+  "airtable_event_key": "supremecommunity:drop:2026-09-10",
+  "state": "RECEIVED",
+  "lifecycle_log": [
+    {
+      "event": "RECEIVED",
+      "timestamp": "2026-09-14T18:30:00Z",
+      "component": "ingestion",
+      "data": {}
+    }
+  ],
+  "raw_error_payload": {
+    "error_name": "ValidationError",
+    "error_message": "[422] Field 'AI Score' cannot accept the provided value",
+    "cause_module_id": "3",
+    "cause_module_type": "gemini:CreateCompletion",
+    "stack_trace": "at airtable.module validation (module 5)"
+  },
+  "per_module_io": {
+    "1": {
+      "inputs": {
+        "prompt": "Generate a detailed analysis of the product"
+      },
+      "outputs": {
+        "status": "SUCCESS",
+        "result": "Analysis generated successfully"
+      }
+    },
+    "3": {
+      "inputs": {
+        "model": "gemini-pro",
+        "max_tokens": 1000,
+        "temperature": 0.7
+      },
+      "outputs": {
+        "status": "SUCCESS",
+        "text": "[TRUNCATED JSON - missing closing brackets due to 1000 token limit]",
+        "finish_reason": "MAX_TOKENS",
+        "token_count": 1000
+      }
+    },
+    "5": {
+      "inputs": null,
+      "outputs": null,
+      "skipped": true,
+      "reason": "Upstream failure - Module 3 output truncated, JSON invalid"
+    }
+  }
+}
