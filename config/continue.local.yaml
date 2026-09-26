@@ -1,0 +1,38 @@
+name: Main Config
+version: 1.0.0
+schema: v1
+models:
+  - name: Gemma 4 (LM Studio)
+    provider: lmstudio
+    model: google/gemma-4-e2b
+    apiBase: http://localhost:1235/v1/
+    capabilities:
+      - tool_use
+    roles:
+      - chat
+  - name: Nemotron 3 Nano 4B (LM Studio)
+    provider: lmstudio
+    model: nvidia/nemotron-3-nano-4b
+    apiBase: http://localhost:1235/v1/
+    capabilities:
+      - tool_use
+    roles:
+      - autocomplete
+  - name: Nomic Embed Text (LM Studio)
+    provider: lmstudio
+    model: text-embedding-nomic-embed-text-v1.5
+    apiBase: http://localhost:1235/v1/
+    roles:
+      - embed
+  - name: Voyage Rerank-2
+    provider: voyage
+    model: rerank-2
+    apiKey: "${{ secrets.VOYAGE_API_KEY }}"
+    roles:
+      - rerank
+  - name: Autodetect
+    provider: lmstudio
+    model: AUTODETECT
+    apiBase: http://localhost:1235/v1/
+    capabilities:
+      - tool_use

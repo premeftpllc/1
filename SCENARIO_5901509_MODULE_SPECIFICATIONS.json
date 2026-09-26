@@ -1,0 +1,534 @@
+{
+  "scenario": {
+    "id": 5901509,
+    "name": "Airtable Updates - Optimized v2",
+    "description": "Redundant check elimination with read-first pattern, pre-filtering, and batch operations",
+    "version": "2.0",
+    "date_created": "2026-09-23",
+    "optimizations": ["read_first_pattern", "pre_filter", "batch_operations"],
+    "expected_ops_month": "50-120",
+    "expected_savings": "80-150 ops (40-75% reduction)",
+    "status": "IMPLEMENTATION_READY"
+  },
+  "modules": [
+    {
+      "module_id": 1,
+      "name": "Trigger",
+      "type": "trigger",
+      "app": "webhook",
+      "description": "Webhook trigger for incoming records to process",
+      "position": "start",
+      "configuration": {
+        "webhook_type": "catch_raw_hook",
+        "parse_json": true
+      },
+      "outputs": [
+        {
+          "name": "record_id",
+          "type": "string",
+          "description": "Unique identifier for incoming record"
+        },
+        {
+          "name": "input_text",
+          "type": "string",
+          "description": "Text input to analyze"
+        },
+        {
+          "name": "url",
+          "type": "string",
+          "description": "URL associated with record"
+        },
+        {
+          "name": "sku",
+          "type": "string",
+          "description": "Product SKU"
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "Current status"
+        },
+        {
+          "name": "skip_analysis_flag",
+          "type": "boolean",
+          "description": "Flag to skip analysis for this record"
+        },
+        {
+          "name": "last_processed_date",
+          "type": "datetime",
+          "description": "Timestamp of last processing"
+        }
+      ]
+    },
+    {
+      "module_id": 2,
+      "name": "Check_Record_Exists",
+      "type": "airtable_search",
+      "app": "airtable",
+      "description": "OPTIMIZATION 1: Read-first - Check if record already exists",
+      "position": "after_trigger",
+      "dependencies": ["Trigger"],
+      "configuration": {
+        "operation": "Search Records",
+        "base_id": "[YOUR_BASE_ID]",
+        "table_id": "[INVENTORY_TABLE_ID]",
+        "search_criteria": {
+          "filter_by_formula": "OR({SKU} = '{{trigger.sku}}', {URL} = '{{trigger.url}}')"
+        },
+        "limit": 1,
+        "sort_by": "created",
+        "sort_order": "desc"
+      },
+      "outputs": [
+        {
+          "name": "record_exists",
+          "type": "boolean",
+          "mapping": "{{size(response.records) > 0}}"
+        },
+        {
+          "name": "existing_record_id",
+          "type": "string",
+          "mapping": "{{response.records[0].id}}"
+        },
+        {
+          "name": "existing_record_data",
+          "type": "object",
+          "mapping": "{{response.records[0].fields}}"
+        },
+        {
+          "name": "record_count",
+          "type": "number",
+          "mapping": "{{size(response.records)}}"
+        }
+      ],
+      "notes": "This module replaces the write-then-check pattern. Performs single read operation instead of write attempts."
+    },
+    {
+      "module_id": 3,
+      "name": "Pre_Filter_Quality_Check",
+      "type": "text_aggregator",
+      "app": "text",
+      "description": "OPTIMIZATION 2: Pre-filter - Check for low-quality records",
+      "position": "after_lookup",
+      "dependencies": ["Check_Record_Exists"],
+      "configuration": {
+        "operations": [
+          {
+            "name": "Check_Input_Length",
+            "expression": "{{length(trigger.input_text) < 50}}",
+            "result_var": "skip_too_short"
+          },
+          {
+            "name": "Check_Recent_Duplicate",
+            "expression": "{{dateDiff(now(), trigger.last_processed_date) < 7 * 86400}}",
+            "result_var": "skip_recent_duplicate"
+          },
+          {
+            "name": "Check_Skip_Flag",
+            "expression": "{{trigger.skip_analysis_flag == true}}",
+            "result_var": "skip_flagged"
+          },
+          {
+            "name": "Aggregate_Filters",
+            "expression": "{{skip_too_short || skip_recent_duplicate || skip_flagged}}",
+            "result_var": "should_skip_analysis"
+          },
+          {
+            "name": "Determine_Skip_Reason",
+            "expression": "{{if(skip_too_short, 'Short input', if(skip_recent_duplicate, 'Recent duplicate', if(skip_flagged, 'User flagged', 'N/A')))}}",
+            "result_var": "skip_reason"
+          }
+        ]
+      },
+      "outputs": [
+        {
+          "name": "should_skip_analysis",
+          "type": "boolean"
+        },
+        {
+          "name": "skip_reason",
+          "type": "string"
+        },
+        {
+          "name": "skip_too_short",
+          "type": "boolean"
+        },
+        {
+          "name": "skip_recent_duplicate",
+          "type": "boolean"
+        },
+        {
+          "name": "skip_flagged",
+          "type": "boolean"
+        }
+      ],
+      "notes": "Filters records before downstream processing. Saves 50-100 ops/month by skipping ~20% of inputs."
+    },
+    {
+      "module_id": 4,
+      "name": "Quality_Filter_Router",
+      "type": "router",
+      "app": "builtin",
+      "description": "OPTIMIZATION 2: Route records based on quality",
+      "position": "after_prefilter",
+      "dependencies": ["Pre_Filter_Quality_Check"],
+      "configuration": {
+        "routes": [
+          {
+            "name": "High_Quality_Process",
+            "condition": "{{Pre_Filter_Quality_Check.should_skip_analysis == false}}",
+            "target_module": "Route_Duplicate_vs_New"
+          },
+          {
+            "name": "Low_Quality_Skip",
+            "condition": "{{Pre_Filter_Quality_Check.should_skip_analysis == true}}",
+            "target_module": "Log_Skipped_Record"
+          }
+        ]
+      },
+      "notes": "Branches to fast path for low-quality or duplicate-quality records."
+    },
+    {
+      "module_id": 5,
+      "name": "Route_Duplicate_vs_New",
+      "type": "router",
+      "app": "builtin",
+      "description": "OPTIMIZATION 1: Route to update or create based on existence check",
+      "position": "after_quality_router",
+      "dependencies": ["Check_Record_Exists"],
+      "configuration": {
+        "routes": [
+          {
+            "name": "Record_Exists",
+            "condition": "{{Check_Record_Exists.record_exists == true}}",
+            "target_module": "Update_Existing_Record"
+          },
+          {
+            "name": "New_Record",
+            "condition": "{{Check_Record_Exists.record_exists == false}}",
+            "target_module": "Batch_Accumulator"
+          }
+        ]
+      },
+      "notes": "Core routing decision: duplicate vs. new record determines processing path."
+    },
+    {
+      "module_id": 6,
+      "name": "Update_Existing_Record",
+      "type": "airtable_update",
+      "app": "airtable",
+      "description": "OPTIMIZATION 1: Update duplicate record efficiently",
+      "position": "duplicate_path",
+      "dependencies": ["Route_Duplicate_vs_New"],
+      "configuration": {
+        "operation": "Update Record",
+        "base_id": "[YOUR_BASE_ID]",
+        "table_id": "[INVENTORY_TABLE_ID]",
+        "record_id": "{{Check_Record_Exists.existing_record_id}}",
+        "fields": {
+          "Status": "{{trigger.status}}",
+          "Last_Updated": "{{now()}}",
+          "Update_Count": "{{(Check_Record_Exists.existing_record_data['Update_Count'] || 0) + 1}}",
+          "Last_Updated_By": "Scenario_5901509_OptimizedV2"
+        }
+      },
+      "outputs": [
+        {
+          "name": "updated_record_id",
+          "type": "string"
+        },
+        {
+          "name": "update_success",
+          "type": "boolean"
+        }
+      ],
+      "operations_cost": "1 op (vs. 3-4 ops for write-check pattern)",
+      "notes": "Direct update of existing record. Cost: 1 op instead of previous 3-4."
+    },
+    {
+      "module_id": 7,
+      "name": "Batch_Accumulator",
+      "type": "array_aggregator",
+      "app": "builtin",
+      "description": "OPTIMIZATION 3: Accumulate records for batch processing",
+      "position": "new_record_path",
+      "dependencies": ["Route_Duplicate_vs_New"],
+      "configuration": {
+        "source": "{{trigger}}",
+        "aggregate_function": "collect",
+        "grouping": false,
+        "max_items": 10,
+        "timeout": 60,
+        "output_as_array": true
+      },
+      "outputs": [
+        {
+          "name": "batch_array",
+          "type": "array",
+          "description": "Accumulated records ready for batch update"
+        },
+        {
+          "name": "batch_count",
+          "type": "number",
+          "description": "Number of records in batch"
+        },
+        {
+          "name": "batch_timestamp",
+          "type": "datetime",
+          "description": "When batch was accumulated"
+        }
+      ],
+      "notes": "Collects 5-10 records before triggering batch update. Reduces ops by 75% for batch operations."
+    },
+    {
+      "module_id": 8,
+      "name": "Batch_Size_Router",
+      "type": "router",
+      "app": "builtin",
+      "description": "OPTIMIZATION 3: Route based on batch size",
+      "position": "after_accumulator",
+      "dependencies": ["Batch_Accumulator"],
+      "configuration": {
+        "routes": [
+          {
+            "name": "Use_Batch_Update",
+            "condition": "{{Batch_Accumulator.batch_count >= 5}}",
+            "target_module": "Batch_Update_Records"
+          },
+          {
+            "name": "Use_Individual_Update",
+            "condition": "{{Batch_Accumulator.batch_count < 5}}",
+            "target_module": "Individual_Create_Record"
+          }
+        ]
+      },
+      "notes": "Uses Airtable batch API when enough records accumulated."
+    },
+    {
+      "module_id": 9,
+      "name": "Batch_Update_Records",
+      "type": "airtable_batch_update",
+      "app": "airtable",
+      "description": "OPTIMIZATION 3: Update multiple records in single API call",
+      "position": "batch_path",
+      "dependencies": ["Batch_Size_Router"],
+      "configuration": {
+        "operation": "Update Records (Batch)",
+        "base_id": "[YOUR_BASE_ID]",
+        "table_id": "[INVENTORY_TABLE_ID]",
+        "records_array": "{{\n          map(Batch_Accumulator.batch_array; record;\n          {\n            fields: {\n              SKU: record.sku,\n              URL: record.url,\n              Status: record.status,\n              Last_Updated: now(),\n              Batch_Size: Batch_Accumulator.batch_count,\n              Updated_By: 'Scenario_5901509_Batch_v2'\n            }\n          })\n        }}",
+        "notification_email": "[YOUR_EMAIL]"
+      },
+      "outputs": [
+        {
+          "name": "batch_update_success",
+          "type": "boolean"
+        },
+        {
+          "name": "records_updated_count",
+          "type": "number"
+        }
+      ],
+      "operations_cost": "1-2 ops for 5-10 records (vs. 5-10 ops individual)",
+      "notes": "Batch API call. Saves 75% ops vs. individual updates."
+    },
+    {
+      "module_id": 10,
+      "name": "Individual_Create_Record",
+      "type": "airtable_create",
+      "app": "airtable",
+      "description": "Create new record (fallback for small batches)",
+      "position": "small_batch_path",
+      "dependencies": ["Batch_Size_Router"],
+      "configuration": {
+        "operation": "Create Record",
+        "base_id": "[YOUR_BASE_ID]",
+        "table_id": "[INVENTORY_TABLE_ID]",
+        "fields": {
+          "SKU": "{{trigger.sku}}",
+          "URL": "{{trigger.url}}",
+          "Status": "{{trigger.status}}",
+          "Created_Date": "{{now()}}",
+          "Created_By": "Scenario_5901509_OptimizedV2",
+          "Update_Count": 0
+        }
+      },
+      "outputs": [
+        {
+          "name": "new_record_id",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "module_id": 11,
+      "name": "Log_Skipped_Record",
+      "type": "datastore_add",
+      "app": "datastore",
+      "description": "OPTIMIZATION 2: Log low-quality records that were skipped",
+      "position": "low_quality_path",
+      "dependencies": ["Quality_Filter_Router"],
+      "configuration": {
+        "datastore": "scenario_5901509_skipped_records",
+        "fields": {
+          "record_id": "{{trigger.record_id}}",
+          "skip_reason": "{{Pre_Filter_Quality_Check.skip_reason}}",
+          "reason_detail": "{{if(Pre_Filter_Quality_Check.skip_too_short, 'Input < 50 chars', if(Pre_Filter_Quality_Check.skip_recent_duplicate, 'Processed in last 7 days', if(Pre_Filter_Quality_Check.skip_flagged, 'User flagged for skip', 'Unknown')))}}",
+          "input_text": "{{substring(trigger.input_text, 0, 100)}}",
+          "input_length": "{{length(trigger.input_text)}}",
+          "timestamp": "{{now()}}"
+        }
+      },
+      "outputs": [
+        {
+          "name": "log_id",
+          "type": "string"
+        }
+      ],
+      "operations_cost": "1 op for logging (vs. 3-5 ops for full processing)",
+      "notes": "Creates audit trail of skipped records for monitoring quality filter effectiveness."
+    },
+    {
+      "module_id": 12,
+      "name": "Quick_Record_Update",
+      "type": "airtable_update",
+      "app": "airtable",
+      "description": "Quick update for low-quality records (skipped analysis)",
+      "position": "low_quality_completion",
+      "dependencies": ["Log_Skipped_Record"],
+      "configuration": {
+        "operation": "Update Record",
+        "base_id": "[YOUR_BASE_ID]",
+        "table_id": "[INVENTORY_TABLE_ID]",
+        "record_id": "{{trigger.record_id}}",
+        "fields": {
+          "Status": "Skipped (Low Quality)",
+          "Skip_Reason": "{{Pre_Filter_Quality_Check.skip_reason}}",
+          "Processing_Timestamp": "{{now()}}",
+          "Skipped_By": "Scenario_5901509_QualityFilter"
+        }
+      },
+      "notes": "Minimal update to mark record as skipped. Cost: 1 op vs. 3-5 for full processing."
+    }
+  ],
+  "module_flow": {
+    "diagram": [
+      "1. Trigger (webhook input)",
+      "   ↓",
+      "2. Check_Record_Exists (read-first: OPTIMIZATION 1)",
+      "   ↓",
+      "3. Pre_Filter_Quality_Check (quality check: OPTIMIZATION 2)",
+      "   ↓",
+      "4. Quality_Filter_Router",
+      "   ├─→ (High Quality)",
+      "   │    ↓",
+      "   │    5. Route_Duplicate_vs_New",
+      "   │       ├─→ (Duplicate)",
+      "   │       │    ↓",
+      "   │       │    6. Update_Existing_Record (1 op) → Complete",
+      "   │       │",
+      "   │       └─→ (New)",
+      "   │            ↓",
+      "   │            7. Batch_Accumulator (OPTIMIZATION 3)",
+      "   │            ↓",
+      "   │            8. Batch_Size_Router",
+      "   │               ├─→ (≥5 records)",
+      "   │               │    ↓",
+      "   │               │    9. Batch_Update_Records (1-2 ops) → Complete",
+      "   │               │",
+      "   │               └─→ (<5 records)",
+      "   │                    ↓",
+      "   │                    10. Individual_Create_Record (2 ops) → Complete",
+      "   │",
+      "   └─→ (Low Quality)",
+      "        ↓",
+      "        11. Log_Skipped_Record",
+      "        ↓",
+      "        12. Quick_Record_Update (1 op) → Complete"
+    ],
+    "stats": {
+      "total_modules": 12,
+      "routers": 2,
+      "optimizations_implemented": 3,
+      "branch_paths": 4
+    }
+  },
+  "data_stores_required": [
+    {
+      "name": "scenario_5901509_skipped_records",
+      "description": "Audit trail of low-quality records skipped by quality filter",
+      "fields": [
+        {
+          "name": "record_id",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "skip_reason",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "reason_detail",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "input_text",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "input_length",
+          "type": "number",
+          "required": false
+        },
+        {
+          "name": "timestamp",
+          "type": "datetime",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "configuration_notes": {
+    "base_id_placeholder": "Replace [YOUR_BASE_ID] with actual Airtable Base ID",
+    "table_id_placeholder": "Replace [INVENTORY_TABLE_ID] with actual Table ID",
+    "email_placeholder": "Replace [YOUR_EMAIL] with notification email",
+    "filters": {
+      "short_input_threshold": "50 characters minimum",
+      "recent_duplicate_window": "7 days",
+      "batch_size": "5-10 records",
+      "batch_timeout": "60 seconds"
+    }
+  },
+  "expected_operations": {
+    "per_new_record": "2-3 ops (creation + metadata)",
+    "per_duplicate": "1 op (update only)",
+    "per_low_quality": "1 op (skip + log)",
+    "batch_overhead": "1-2 ops for 5-10 records",
+    "monthly_total": "50-120 ops (vs. 200 baseline)"
+  },
+  "success_metrics": {
+    "duplicate_detection_accuracy": "99%+",
+    "quality_filter_precision": "95%+",
+    "data_integrity": "0% record loss",
+    "processing_latency": "<2 hours",
+    "error_rate": "<1%",
+    "ops_reduction": "40-75% (80-150 ops saved)"
+  },
+  "testing_checklist": [
+    "Test 1: New record creation",
+    "Test 2: Duplicate detection and update",
+    "Test 3: Partial duplicate (SKU only)",
+    "Test 4: High-quality record routing",
+    "Test 5: Short input filtering (<50 chars)",
+    "Test 6: Recent duplicate filtering (7 day window)",
+    "Test 7: Flagged record skip",
+    "Test 8: Small batch processing (< 5 records)",
+    "Test 9: Large batch processing (10+ records)",
+    "Test 10: Mixed quality batch",
+    "Test 11: Full end-to-end flow (20 records)",
+    "Test 12: Ops measurement validation"
+  ]
+}

@@ -1,0 +1,9 @@
+# No credentials. Smoke test for Continue MCP wiring and current-date awareness.
+name: PremeOS Time
+version: 1.0.0
+schema: v1
+mcpServers:
+  - name: time
+    command: uvx
+    args:
+      - "mcp-server-time"

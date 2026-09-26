@@ -1,41 +1,51 @@
-﻿# Environment variables
-.env.local
+# Secrets and credentials (encrypted secrets/premeos.env is the only tracked secret file)
 .env
-.env.*.local
+.env.*
+!.env.example
+!.env.local.example
+*.pem
+*.key
+credentials*.json
+*credentials*.json
+gcp-oauth.keys.json
+*.keys.json
+premeos-*.json
+.gmail-mcp/
 
-# Session data and devdata
+# SOPS: never commit plaintext secrets or an age private key
+.config/sops/
+secrets/*.plain
+
+# Continue config is per machine (models differ by hardware); shared parts live in config/continue/
+config.yaml
+
+# Continue session data, if a Continue folder is ever opened here
 sessions/
 dev_data/
 index/
 
-# Cache and build
-__pycache__/
+# Dependencies, caches and build output
 node_modules/
+__pycache__/
+.venv/
+.local/
 .next/
 dist/
 build/
+.playwright-mcp/
 
-# IDE
-.vscode/
+# Editors: share project settings, tasks and extension recommendations only
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
 
+# Claude Code: per-machine permissions
+.claude/settings.local.json
+
 # OS
 .DS_Store
 Thumbs.db
-
-# Playwright
-.playwright-mcp/
-
-# OAuth/service-account credential files
-.continue/gcp-oauth.keys.json
-*.keys.json
-premeos-*.json
-
-# Continue config holds LITERAL secrets (v2.0.0 cannot read ${VAR} from env) - never track it
-config.yaml
-
-# SOPS: never commit plaintext secrets or the age private key
-.config/sops/
-secrets/*.plain

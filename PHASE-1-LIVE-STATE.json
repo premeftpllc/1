@@ -1,0 +1,76 @@
+{
+  "timestamp": "2026-08-26T19:06:00Z",
+  "scenario_id": 5774991,
+  "scenario_name": "PremeOS — Intelligence — Opportunity Processing",
+  
+  "integrity_status": "RED - BLUEPRINT DAMAGED",
+  "damage_type": "truncated_module_restoration",
+  "cause": "previous_repair_tool_parameter_limit",
+  
+  "live_state": {
+    "isActive": false,
+    "isinvalid": true,
+    "islinked": false,
+    "isPaused": false,
+    "lastEdit": "2026-08-26T19:04:44.143Z",
+    "usedPackages": ["airtable", "datastore", "openai-gpt-3"]
+  },
+  
+  "module_inventory": {
+    "total_modules": 3,
+    "expected_modules": 7,
+    "present": [2, 26, 3],
+    "missing": [5, 31, 11, 16]
+  },
+  
+  "modules": [
+    {
+      "id": 2,
+      "type": "airtable:TriggerWatchRecords",
+      "status": "present"
+    },
+    {
+      "id": 26,
+      "type": "datastore:AddRecord",
+      "status": "present",
+      "onerror": []
+    },
+    {
+      "id": 3,
+      "type": "openai-gpt-3:CreateCompletion",
+      "status": "present",
+      "parameters": {
+        "top_p": 1,
+        "max_tokens": 300
+      }
+    },
+    {
+      "id": 5,
+      "type": "airtable:ActionCreateRecord",
+      "status": "MISSING - CRITICAL"
+    },
+    {
+      "id": 31,
+      "type": "datastore:UpdateRecord",
+      "status": "MISSING"
+    },
+    {
+      "id": 11,
+      "type": "airtable:ActionUpdateRecords",
+      "status": "MISSING"
+    },
+    {
+      "id": 16,
+      "type": "builtin:BasicRouter",
+      "status": "MISSING"
+    }
+  ],
+  
+  "assessment": {
+    "safety_classification": "RED",
+    "pipeline_functional": false,
+    "module_completeness": "43% (3 of 7)",
+    "reason_broken": "Module 5 (Opportunity creation) missing - pipeline halts at Module 3 output",
+    "auto_deactivation_likely_reason": "Scenario validation failed due to incomplete module flow"
+  }
+}
