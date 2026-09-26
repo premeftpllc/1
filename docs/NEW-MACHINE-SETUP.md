@@ -189,5 +189,8 @@ anything that differed from this guide. Commit any fixes to this guide on `main`
 - **Slack `missing_scope`:** the bot token's scopes were added under User Token Scopes; the block
   uses the user token (xoxp) for that reason. To switch to the bot token, move the scopes to Bot
   Token Scopes, reinstall the Slack app, and change the block's env to `SLACK_MCP_XOXB_TOKEN`.
+- **Model will not load (`ENOENT ... mkdtemp ... .lmstudio/.internal/temp`):** LM Studio lost its temp
+  folder (seen on the PC after a server stop/start). `workspace.py load` recreates it; if loading from
+  the LM Studio app instead, run `mkdir -p ~/.lmstudio/.internal/temp` first.
 - **Make shows ~146 tools:** the bridge did not find `.continue/mcp-tool-filters.json`; it warns
   on stderr. `MAKE_MCP_TOOL_MODE=all` restores the full list deliberately.
