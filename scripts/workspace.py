@@ -190,6 +190,9 @@ def main():
         if action == "server":
             subprocess.run([str(LMS), "server", "start", "--port", "1235"], check=True)
         else:
+            # LM Studio loads fail with ENOENT (mkdtemp ...\.internal\temp) when its temp folder has
+            # been removed, which happened on the PC after a server stop/start on 2026-09-26.
+            (LMS.parent.parent / ".internal" / "temp").mkdir(parents=True, exist_ok=True)
             loaded = subprocess.run([str(LMS), "ps"], capture_output=True, text=True).stdout
             load = profile()["load"]
             wanted = [(MODEL, [] if load is None else ["--context-length", str(load), "--parallel", "1"]),

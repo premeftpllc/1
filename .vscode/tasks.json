@@ -118,9 +118,6 @@
       "problemMatcher": [],
       "options": {
         "cwd": "${workspaceFolder}"
-      },
-      "runOptions": {
-        "runOn": "folderOpen"
       }
     },
     {
@@ -137,7 +134,10 @@
       },
       "runOptions": {
         "runOn": "folderOpen"
-      }
+      },
+      "dependsOn": [
+        "PremeOS: Start LM Studio server"
+      ]
     },
     {
       "label": "PremeOS: Sync MCP secrets",
