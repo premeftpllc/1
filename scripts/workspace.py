@@ -17,11 +17,12 @@ import urllib.error
 import urllib.request
 
 BASE = "http://127.0.0.1:1235"
-MODEL = "nvidia/nemotron-3-nano-4b"
+WINDOWS = os.name == "nt"
+MODEL = "qwen3-14b" if WINDOWS else "nvidia/nemotron-3-nano-4b"
+MODEL_NAME = "Qwen3 14B Q4_K_M" if WINDOWS else "Nemotron 3 Nano 4B"
 AUTOCOMPLETE = "qwen2.5-coder-1.5b-instruct"
 AUTOCOMPLETE_CONTEXT = 8192
 EMBED = "text-embedding-nomic-embed-text-v1.5"
-WINDOWS = os.name == "nt"
 ROOT = Path(__file__).resolve().parents[1]
 CONTINUE_HOME = Path.home() / ".continue"
 CONFIG_TEMPLATE = ROOT / "config" / "continue" / "config.template.yaml"
@@ -37,11 +38,11 @@ REPO_PATH = re.compile(r"\{\{PREMEOS_REPO\}\}/([^\"'\s]+)")
 def profile():
     """Per-machine model settings.
 
-    PC: LM Studio loads Nemotron with its saved per-model defaults (401,719 context), so Continue
-    uses 400,000. Macs: 32,768 with parallel 1, the setting verified on the 8 GB MacBook.
+    PC: Qwen3 14B Q4_K_M uses its supported 40,960 context with parallel 1. Macs retain
+    Nemotron at 32,768 until each machine is profiled and verified independently.
     PREMEOS_CONTEXT overrides both (e.g. a Mac mini with more memory)."""
     if WINDOWS:
-        load, context, max_tokens = None, 400000, 16384
+        load, context, max_tokens = 40960, 40960, 16384
     else:
         load, context, max_tokens = 32768, 32768, 8192
     override = os.environ.get("PREMEOS_CONTEXT")
@@ -80,6 +81,8 @@ def rendered_config():
     """config.template.yaml with this machine's context and output limits filled in."""
     settings = profile()
     return (CONFIG_TEMPLATE.read_text(encoding="utf-8")
+            .replace("{{CHAT_MODEL_NAME}}", MODEL_NAME)
+            .replace("{{CHAT_MODEL}}", MODEL)
             .replace("{{CONTEXT}}", str(settings["context"]))
             .replace("{{MAX_TOKENS}}", str(settings["max_tokens"])))
 

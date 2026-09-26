@@ -7,8 +7,8 @@ Open **PremeOS.code-workspace** in VS Code. This repository holds operational ev
 ## Daily workflow
 
 1. `git pull`, then run **Terminal → Run Task → PremeOS: Sync MCP secrets** and **PremeOS: Check local AI**.
-2. Open Continue; the profile is **PremeOS (Nemotron 3 Nano 4B, local LM Studio)** and the model for Chat, Autocomplete, Edit and Apply is **nvidia/nemotron-3-nano-4b**. If the configuration has not refreshed, run **Developer: Reload Window**.
-3. Attach the relevant file or selection to your question. Start a new chat for a new task; the context budget is 32,768 tokens on the Macs and 400,000 on the PC.
+2. Open Continue; the verified PC profile uses **Qwen3 14B Q4_K_M** for Chat, Edit and Apply. Macs retain **Nemotron 3 Nano 4B** until each one is profiled independently. Autocomplete uses **Qwen2.5-Coder 1.5B** everywhere. If the configuration has not refreshed, run **Developer: Reload Window**.
+3. Attach the relevant file or selection to your question. Start a new chat for a new task; the verified context budget is 40,960 on the PC and 32,768 with Nemotron on the Macs.
 4. Review proposed changes in Source Control and run **PremeOS: Validate JSON** after blueprint edits.
 
 ## Start here
@@ -25,7 +25,7 @@ These reports describe past investigations. Their filenames and completion claim
 
 ## Local AI
 
-Continue → `http://127.0.0.1:1235/v1` → LM Studio → `nvidia/nemotron-3-nano-4b` for chat, edit and apply, with tool use enabled; `qwen2.5-coder-1.5b-instruct` (fill-in-the-middle code model) for autocomplete. Context is set per machine by `scripts/workspace.py`: 400,000 on the PC, 32,768 with 1 parallel request on the Macs (the largest setting that loads on the 8 GB MacBook). Nomic provides embeddings; Voyage rerank-2 (cloud) reranks @codebase/@docs results.
+Continue → `http://127.0.0.1:1235/v1` → LM Studio. Windows uses the official Qwen `qwen3-14b` Q4_K_M model for chat, edit and apply with tool use enabled; Macs retain `nvidia/nemotron-3-nano-4b` until they are profiled independently. `qwen2.5-coder-1.5b-instruct` remains the fill-in-the-middle autocomplete model everywhere. Context is set by `scripts/workspace.py`: 40,960 on the PC and 32,768 for Nemotron on Macs, always with one parallel request. Nomic provides embeddings; Voyage rerank-2 (cloud) reranks @codebase/@docs results.
 
 `~/.continue/config.yaml` is rendered from `config/continue/config.template.yaml` by `workspace.py config --apply`. MCP servers are secret-free blocks in `config/continue/mcpServers/`, activated per machine by `workspace.py secrets` once their secrets are in `~/.continue/.env`. The 8 Continue rules live in `.continue/rules/` and load whenever this repo is the open workspace. The VS Code tasks **Start LM Studio server** and **Load local model** run when the workspace opens; allow automatic tasks once when VS Code asks. See [New machine setup](docs/NEW-MACHINE-SETUP.md) and [Continue MCP setup](docs/CONTINUE-MCP-ARCHITECTURE.md).
 

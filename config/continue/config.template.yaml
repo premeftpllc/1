@@ -2,13 +2,13 @@
 # The context and output limits are filled in from the machine profile in scripts/workspace.py.
 # Keep models here only: MCP servers come from config/continue/mcpServers/ and rules from
 # .continue/rules/, so every machine shares them through git.
-name: PremeOS (Nemotron 3 Nano 4B, local LM Studio)
+name: PremeOS ({{CHAT_MODEL_NAME}}, local LM Studio)
 version: 1.0.0
 schema: v1
 models:
-  - name: nemotron-3-nano-4b
+  - name: {{CHAT_MODEL_NAME}}
     provider: lmstudio
-    model: nvidia/nemotron-3-nano-4b
+    model: {{CHAT_MODEL}}
     apiBase: http://127.0.0.1:1235/v1
     roles:
       - chat
