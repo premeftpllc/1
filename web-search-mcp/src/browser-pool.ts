@@ -12,49 +12,58 @@ export class BrowserPool {
     // Read configuration from environment variables
     this.maxBrowsers = parseInt(process.env.MAX_BROWSERS || '3', 10);
     this.headless = process.env.BROWSER_HEADLESS !== 'false'; // Default to true
-    
+
     // Configure browser types based on environment
     const browserTypesEnv = process.env.BROWSER_TYPES || 'chromium,firefox';
     this.browserTypes = browserTypesEnv.split(',').map(type => type.trim());
-    
-    console.log(`[BrowserPool] Configuration: maxBrowsers=${this.maxBrowsers}, headless=${this.headless}, types=${this.browserTypes.join(',')}`);
+
+    console.log(
+      `[BrowserPool] Configuration: maxBrowsers=${this.maxBrowsers}, headless=${this.headless}, types=${this.browserTypes.join(',')}`
+    );
   }
 
   async getBrowser(): Promise<Browser> {
     // Rotate between browser types for variety
-    const browserType = this.browserTypes[this.currentBrowserIndex % this.browserTypes.length];
+    const browserType =
+      this.browserTypes[this.currentBrowserIndex % this.browserTypes.length];
     this.currentBrowserIndex++;
     this.lastUsedBrowserType = browserType;
 
     const existing = this.browsers.get(browserType);
     if (existing) {
-      
       // Check if browser is still connected and healthy
       try {
         if (existing.isConnected()) {
           // Quick health check by trying to create and close a context
           // Use minimal options to avoid Firefox isMobile issues
           const testContext = await existing.newContext({
-            userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+            userAgent:
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
           });
           await testContext.close();
           return existing;
         }
       } catch (error) {
-        console.log(`[BrowserPool] Browser ${browserType} health check failed:`, error);
+        console.log(
+          `[BrowserPool] Browser ${browserType} health check failed:`,
+          error
+        );
         // Browser is unhealthy, remove it and close if possible
         this.browsers.delete(browserType);
         try {
           await existing.close();
         } catch (closeError) {
-          console.log(`[BrowserPool] Error closing unhealthy browser:`, closeError);
+          console.log(
+            `[BrowserPool] Error closing unhealthy browser:`,
+            closeError
+          );
         }
       }
     }
 
     // Launch new browser
     console.log(`[BrowserPool] Launching new ${browserType} browser`);
-    
+
     const launchOptions = {
       headless: this.headless,
       args: [
@@ -91,7 +100,7 @@ export class BrowserPool {
       }
 
       this.browsers.set(browserType, browser);
-      
+
       // Clean up old browsers if we have too many
       if (this.browsers.size > this.maxBrowsers) {
         const oldestBrowser = this.browsers.entries().next().value;
@@ -107,20 +116,23 @@ export class BrowserPool {
 
       return browser;
     } catch (error) {
-      console.error(`[BrowserPool] Failed to launch ${browserType} browser:`, error);
+      console.error(
+        `[BrowserPool] Failed to launch ${browserType} browser:`,
+        error
+      );
       throw error;
     }
   }
 
   async closeAll(): Promise<void> {
     console.log(`[BrowserPool] Closing ${this.browsers.size} browsers`);
-    
-    const closePromises = Array.from(this.browsers.values()).map(browser => 
-      browser.close().catch(error => 
-        console.error('Error closing browser:', error)
-      )
+
+    const closePromises = Array.from(this.browsers.values()).map(browser =>
+      browser
+        .close()
+        .catch(error => console.error('Error closing browser:', error))
     );
-    
+
     await Promise.all(closePromises);
     this.browsers.clear();
   }
