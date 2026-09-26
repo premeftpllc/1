@@ -142,7 +142,7 @@ export class EnhancedContentExtractor {
         );
 
         // Remove automation indicators
-        const windowWithChrome = window as any;
+        const windowWithChrome = window as Window & { chrome?: { app?: unknown; runtime?: unknown } };
         if (windowWithChrome.chrome) {
           delete windowWithChrome.chrome.app;
           delete windowWithChrome.chrome.runtime;
@@ -275,7 +275,8 @@ export class EnhancedContentExtractor {
     }
   }
 
-  private shouldUseBrowser(error: any, url: string): boolean {
+  private shouldUseBrowser(caught: unknown, url: string): boolean {
+    const error = caught as { message?: string; response?: { status?: number; data?: string } };
     // Conditions where browser is likely to succeed where axios failed
     const indicators = [
       // HTTP status codes that suggest bot detection

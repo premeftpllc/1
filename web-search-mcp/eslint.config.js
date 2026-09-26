@@ -66,9 +66,10 @@ export default [
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-non-null-assertion': 'warn',
-            'prefer-const': 'error',
+      'prefer-const': 'error',
       'no-var': 'error',
-      'no-console': 'warn',
+      // Logging is intentional: src/index.ts redirects console.log to stderr so stdout stays reserved for MCP stdio
+      'no-console': 'off',
       'no-undef': 'off',
     },
   },
