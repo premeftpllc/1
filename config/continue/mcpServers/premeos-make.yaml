@@ -2,11 +2,13 @@ name: PremeOS Make
 version: 1.0.0
 schema: v1
 mcpServers:
-  - name: make
-    # Make hosted MCP (us2). Advertises about 146 tools (~40K prompt tokens) and includes
-    # write/delete tools: switch it off in Continue > Tools when not needed; keep tools on "Ask first".
-    type: streamable-http
-    url: https://us2.make.com/mcp
-    requestOptions:
-      headers:
-        Authorization: "Bearer ${{ secrets.MAKE_MCP_AUTHORIZATION }}"
+  - name: make-custom-mcp
+    # Bridge to Make's hosted MCP (us2) that trims ~146 tools to the 42 listed in
+    # .continue/mcp-tool-filters.json. Set MAKE_MCP_TOOL_MODE=all for the full list.
+    # The subset still includes write tools (scenarios_delete, scenarios_run): keep them on "Ask first".
+    # requires {{PREMEOS_REPO}}/node_modules/@modelcontextprotocol/sdk
+    command: node
+    args:
+      - "{{PREMEOS_REPO}}/.continue/mcp-make-bridge.js"
+    env:
+      MAKE_MCP_AUTHORIZATION: "${{ secrets.MAKE_MCP_AUTHORIZATION }}"

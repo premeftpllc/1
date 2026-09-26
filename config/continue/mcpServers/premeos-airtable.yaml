@@ -3,9 +3,7 @@ version: 1.0.0
 schema: v1
 mcpServers:
   - name: airtable
-    command: npx
-    args:
-      - "-y"
-      - "airtable-mcp-server@1.14.0"
-    env:
-      AIRTABLE_API_KEY: "${{ secrets.AIRTABLE_API_KEY }}"
+    # Airtable's hosted MCP server (no local process).
+    type: streamable-http
+    url: https://mcp.airtable.com/mcp
+    apiKey: "${{ secrets.AIRTABLE_TOKEN }}"

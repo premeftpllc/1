@@ -3,7 +3,15 @@ version: 1.0.0
 schema: v1
 mcpServers:
   - name: web-search
-    # DuckDuckGo; no API key, no headless browser. 3 tools (about 4.7 KB of schema).
-    command: uvx
+    # The repo's web-search-mcp build (get-web-search-summaries, full-web-search,
+    # get-single-web-page-content), which the rules name. Build it once per machine:
+    #   cd web-search-mcp && npm ci && npm run build && npx playwright install chromium
+    command: node
     args:
-      - "duckduckgo-mcp-server@0.7.0"
+      - "{{PREMEOS_REPO}}/web-search-mcp/dist/index.js"
+    env:
+      BROWSER_HEADLESS: "true"
+      BROWSER_TYPES: chromium
+      MAX_BROWSERS: "1"
+      DEFAULT_TIMEOUT: "30000"
+      MAX_CONTENT_LENGTH: "50000"

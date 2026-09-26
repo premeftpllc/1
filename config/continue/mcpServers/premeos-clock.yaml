@@ -1,0 +1,11 @@
+name: PremeOS Clock
+version: 1.0.0
+schema: v1
+mcpServers:
+  - name: clock
+    # get_current_datetime, which the rules call before any time-sensitive search.
+    # {{PREMEOS_REPO}} is filled in by workspace.py; `workspace.py setup` installs the MCP SDK.
+    # requires {{PREMEOS_REPO}}/node_modules/@modelcontextprotocol/sdk
+    command: node
+    args:
+      - "{{PREMEOS_REPO}}/.continue/mcp-clock.mjs"

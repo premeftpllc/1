@@ -1,3 +1,15 @@
+# Same line endings on every machine regardless of each machine's git config:
+# text files are stored with LF and checked out natively.
+* text=auto
+
+# Shopify/marketplace CSVs are imported byte-for-byte; never convert them.
+*.csv -text
+*.xlsx binary
+
+# Windows-only scripts keep CRLF.
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+
 # SOPS-encrypted files: never let git rewrite line endings (CRLF on Windows would
 # alter the ciphertext file and can break decryption). Treat as opaque bytes.
 secrets/** -text

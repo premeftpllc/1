@@ -2,6 +2,33 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "PremeOS: Set up this machine (npm + web-search build)",
+      "type": "process",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/scripts/workspace.py",
+        "setup"
+      ],
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "PremeOS: Apply Continue config",
+      "type": "process",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/scripts/workspace.py",
+        "config",
+        "--apply"
+      ],
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
       "label": "PremeOS: Check local AI",
       "type": "process",
       "command": "python3",
@@ -83,12 +110,10 @@
     {
       "label": "PremeOS: Start LM Studio server",
       "type": "process",
-      "command": "${env:HOME}/.lmstudio/bin/lms",
+      "command": "python3",
       "args": [
-        "server",
-        "start",
-        "--port",
-        "1235"
+        "${workspaceFolder}/scripts/workspace.py",
+        "server"
       ],
       "problemMatcher": [],
       "options": {
@@ -99,9 +124,13 @@
       }
     },
     {
-      "label": "PremeOS: Load local model (Nemotron 32K)",
-      "type": "shell",
-      "command": "\"$HOME/.lmstudio/bin/lms\" ps | grep -q nvidia/nemotron-3-nano-4b || \"$HOME/.lmstudio/bin/lms\" load nvidia/nemotron-3-nano-4b --context-length 32768 --parallel 1 --identifier nvidia/nemotron-3-nano-4b -y",
+      "label": "PremeOS: Load local model",
+      "type": "process",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/scripts/workspace.py",
+        "load"
+      ],
       "problemMatcher": [],
       "options": {
         "cwd": "${workspaceFolder}"

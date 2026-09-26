@@ -1,0 +1,38 @@
+# Rendered into ~/.continue/config.yaml by `python3 scripts/workspace.py config --apply`.
+# The context and output limits are filled in from the machine profile in scripts/workspace.py.
+# Keep models here only: MCP servers come from config/continue/mcpServers/ and rules from
+# .continue/rules/, so every machine shares them through git.
+name: PremeOS (Nemotron 3 Nano 4B, local LM Studio)
+version: 1.0.0
+schema: v1
+models:
+  - name: nemotron-3-nano-4b
+    provider: lmstudio
+    model: nvidia/nemotron-3-nano-4b
+    apiBase: http://127.0.0.1:1235/v1
+    roles:
+      - chat
+      - autocomplete
+      - edit
+      - apply
+    capabilities:
+      - tool_use
+    defaultCompletionOptions:
+      contextLength: {{CONTEXT}}
+      maxTokens: {{MAX_TOKENS}}
+    requestOptions:
+      timeout: 300000
+  - name: Nomic Embed Text v1.5
+    provider: lmstudio
+    model: text-embedding-nomic-embed-text-v1.5
+    apiBase: http://127.0.0.1:1235/v1
+    roles:
+      - embed
+    requestOptions:
+      timeout: 300000
+  - name: Voyage Rerank-2
+    provider: voyage
+    model: rerank-2
+    apiKey: "${{ secrets.VOYAGE_API_KEY }}"
+    roles:
+      - rerank
