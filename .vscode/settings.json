@@ -1,5 +1,5 @@
 {
-  "window.title": "PremeOS \u2014 ${activeEditorShort}${separator}${appName}",
+  "window.title": "PremeOS — ${activeEditorShort}${separator}${appName}",
   "editor.wordWrap": "on",
   "editor.minimap.enabled": false,
   "editor.rulers": [
@@ -8,12 +8,10 @@
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
   "files.insertFinalNewline": true,
-  "files.autoSave": "off",
   "explorer.sortOrder": "type",
   "breadcrumbs.enabled": true,
   "workbench.editor.enablePreview": false,
   "diffEditor.ignoreTrimWhitespace": false,
-  "git.autofetch": false,
   "search.exclude": {
     "**/.git": true,
     "**/.venv": true,
@@ -24,5 +22,28 @@
     "**/.git/objects/**": true,
     "**/.venv/**": true,
     "**/node_modules/**": true
-  }
+  },
+  "prettier.requireConfig": true,
+  "[typescript]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "files.trimTrailingWhitespace": true
+  },
+  "[javascript]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "files.trimTrailingWhitespace": true
+  },
+  "[python]": {
+    "files.trimTrailingWhitespace": true
+  },
+  "[powershell]": {
+    "files.trimTrailingWhitespace": true,
+    "files.encoding": "utf8bom"
+  },
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
+  ]
 }

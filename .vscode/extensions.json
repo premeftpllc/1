@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "continue.continue",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-python.python",
+    "ms-vscode.powershell"
+  ]
+}
