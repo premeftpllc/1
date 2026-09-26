@@ -37,8 +37,9 @@ layout, retired 2026-09-26).
 | shopify | premeos-shopify | `npx shopify-mcp@1.0.8` (live store, write tools: keep "Ask first") | 14 |
 | zapier | premeos-zapier | Zapier hosted MCP (URL from secrets) | 1 |
 
-Model everywhere: `nvidia/nemotron-3-nano-4b` in LM Studio on port **1235** for chat, autocomplete,
-edit and apply; `text-embedding-nomic-embed-text-v1.5` for embeddings; Voyage `rerank-2` (cloud).
+Models everywhere, in LM Studio on port **1235**: `nvidia/nemotron-3-nano-4b` for chat, edit and apply;
+`qwen2.5-coder-1.5b-instruct` for autocomplete (a fill-in-the-middle code model, added 2026-09-26 by
+owner decision); `text-embedding-nomic-embed-text-v1.5` for embeddings; Voyage `rerank-2` (cloud).
 Context: PC 400,000 (LM Studio loads 401,719); Macs **32,768 with parallel 1** (the setting that
 loads on the 8 GB MacBook, verified 2026-09-24).
 
@@ -120,10 +121,14 @@ workspace rules without de-duplicating): `ls ~/.continue/rules` should be empty 
 
 ## 5. Local model
 
-1. In LM Studio, download `nvidia/nemotron-3-nano-4b` and `text-embedding-nomic-embed-text-v1.5`.
+1. In LM Studio, download `nvidia/nemotron-3-nano-4b` and `text-embedding-nomic-embed-text-v1.5`, and
+   the autocomplete model (GGUF, so its name matches the template on every machine):
+   `~/.lmstudio/bin/lms get https://huggingface.co/lmstudio-community/Qwen2.5-Coder-1.5B-Instruct-GGUF -y`
 2. `python3 scripts/workspace.py server` (starts LM Studio's server on port 1235)
-3. `python3 scripts/workspace.py load` (loads Nemotron at 32,768 context, parallel 1)
-4. `python3 scripts/workspace.py health && python3 scripts/workspace.py chat` → `PASS ... PREMEOS_OK`
+3. `python3 scripts/workspace.py load` (Nemotron at 32,768 context, parallel 1; the autocomplete
+   model at 8,192, parallel 1)
+4. `python3 scripts/workspace.py health && python3 scripts/workspace.py chat && python3 scripts/workspace.py autocomplete`
+   → three `PASS` lines (`PREMEOS_OK`, and the autocomplete model filling a code gap)
 
 **Mac mini with more than 8 GB:** 32,768 is the safe default. A larger context is the owner's call;
 if they choose one, export `PREMEOS_CONTEXT=<n>` and rerun `config --apply` and `load` (unload the

@@ -18,6 +18,8 @@ import urllib.request
 
 BASE = "http://127.0.0.1:1235"
 MODEL = "nvidia/nemotron-3-nano-4b"
+AUTOCOMPLETE = "qwen2.5-coder-1.5b-instruct"
+AUTOCOMPLETE_CONTEXT = 8192
 EMBED = "text-embedding-nomic-embed-text-v1.5"
 WINDOWS = os.name == "nt"
 ROOT = Path(__file__).resolve().parents[1]
@@ -131,7 +133,7 @@ def sync_secrets():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["setup", "secrets", "config", "mcp", "server", "load",
-                                           "health", "chat", "embed", "validate"])
+                                           "health", "chat", "autocomplete", "embed", "validate"])
     parser.add_argument("--apply", action="store_true",
                         help="config: write ~/.continue/config.yaml; mcp: install ready MCP blocks")
     args = parser.parse_args()
@@ -187,19 +189,23 @@ def main():
             raise ValueError(f"LM Studio CLI not found at {LMS}; install LM Studio and open it once.")
         if action == "server":
             subprocess.run([str(LMS), "server", "start", "--port", "1235"], check=True)
-        elif MODEL in subprocess.run([str(LMS), "ps"], capture_output=True, text=True).stdout:
-            print(f"{MODEL} is already loaded.")
         else:
+            loaded = subprocess.run([str(LMS), "ps"], capture_output=True, text=True).stdout
             load = profile()["load"]
-            sizing = [] if load is None else ["--context-length", str(load), "--parallel", "1"]
-            subprocess.run([str(LMS), "load", MODEL, *sizing, "--identifier", MODEL, "-y"], check=True)
+            wanted = [(MODEL, [] if load is None else ["--context-length", str(load), "--parallel", "1"]),
+                      (AUTOCOMPLETE, ["--context-length", str(AUTOCOMPLETE_CONTEXT), "--parallel", "1"])]
+            for model, sizing in wanted:
+                if model in loaded:
+                    print(f"{model} is already loaded.")
+                else:
+                    subprocess.run([str(LMS), "load", model, *sizing, "--identifier", model, "-y"], check=True)
     elif action == "health":
         models = request("/v1/models")["data"]
         ids = {item["id"] for item in models}
-        missing = {MODEL, EMBED} - ids
+        missing = {MODEL, AUTOCOMPLETE, EMBED} - ids
         if missing:
             raise ValueError("Missing configured models: " + ", ".join(sorted(missing)))
-        print(f"PASS: {BASE} reachable; both configured models available.")
+        print(f"PASS: {BASE} reachable; all three local models available.")
         wanted = profile()["context"]
         for item in request("/api/v0/models")["data"]:
             if item["id"] == MODEL:
@@ -218,6 +224,16 @@ def main():
         if "PREMEOS_OK" not in content:
             raise ValueError("Chat returned no expected marker; inspect model response/settings.")
         print("PASS: local chat generated PREMEOS_OK.")
+    elif action == "autocomplete":
+        prompt = ("<|fim_prefix|>def average(values):\n    if not values:\n        return 0\n    <|fim_suffix|>"
+                  "\n\nprint(average([2, 4, 6]))<|fim_middle|>")
+        result = request("/v1/completions", {
+            "model": AUTOCOMPLETE, "prompt": prompt, "max_tokens": 40, "temperature": 0,
+            "stop": ["<|fim_pad|>", "<|endoftext|>", "\n\n"]})
+        text = result["choices"][0].get("text") or ""
+        if "len(values)" not in text:
+            raise ValueError(f"Fill-in-the-middle gave an unexpected completion: {text!r}")
+        print(f"PASS: {AUTOCOMPLETE} filled the gap with {text.strip()!r}.")
     elif action == "mcp":
         names = env_names()
         blocks = sorted(MCP_BLOCKS.glob("*.yaml"))

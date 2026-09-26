@@ -12,7 +12,6 @@ models:
     apiBase: http://127.0.0.1:1235/v1
     roles:
       - chat
-      - autocomplete
       - edit
       - apply
     capabilities:
@@ -22,6 +21,18 @@ models:
       maxTokens: {{MAX_TOKENS}}
     requestOptions:
       timeout: 300000
+  - name: Qwen2.5-Coder 1.5B (autocomplete)
+    # Code model trained for fill-in-the-middle; Continue recommends it for local tab completion.
+    # Download: lms get https://huggingface.co/lmstudio-community/Qwen2.5-Coder-1.5B-Instruct-GGUF -y
+    provider: lmstudio
+    model: qwen2.5-coder-1.5b-instruct
+    apiBase: http://127.0.0.1:1235/v1
+    roles:
+      - autocomplete
+    autocompleteOptions:
+      debounceDelay: 250
+      maxPromptTokens: 1024
+      modelTimeout: 150
   - name: Nomic Embed Text v1.5
     provider: lmstudio
     model: text-embedding-nomic-embed-text-v1.5

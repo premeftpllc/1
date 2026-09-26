@@ -25,7 +25,7 @@ These reports describe past investigations. Their filenames and completion claim
 
 ## Local AI
 
-Continue → `http://127.0.0.1:1235/v1` → LM Studio → `nvidia/nemotron-3-nano-4b` for chat, autocomplete, edit and apply, with tool use enabled. Context is set per machine by `scripts/workspace.py`: 400,000 on the PC, 32,768 with 1 parallel request on the Macs (the largest setting that loads on the 8 GB MacBook). Nomic provides embeddings; Voyage rerank-2 (cloud) reranks @codebase/@docs results.
+Continue → `http://127.0.0.1:1235/v1` → LM Studio → `nvidia/nemotron-3-nano-4b` for chat, edit and apply, with tool use enabled; `qwen2.5-coder-1.5b-instruct` (fill-in-the-middle code model) for autocomplete. Context is set per machine by `scripts/workspace.py`: 400,000 on the PC, 32,768 with 1 parallel request on the Macs (the largest setting that loads on the 8 GB MacBook). Nomic provides embeddings; Voyage rerank-2 (cloud) reranks @codebase/@docs results.
 
 `~/.continue/config.yaml` is rendered from `config/continue/config.template.yaml` by `workspace.py config --apply`. MCP servers are secret-free blocks in `config/continue/mcpServers/`, activated per machine by `workspace.py secrets` once their secrets are in `~/.continue/.env`. The 8 Continue rules live in `.continue/rules/` and load whenever this repo is the open workspace. The VS Code tasks **Start LM Studio server** and **Load local model** run when the workspace opens; allow automatic tasks once when VS Code asks. See [New machine setup](docs/NEW-MACHINE-SETUP.md) and [Continue MCP setup](docs/CONTINUE-MCP-ARCHITECTURE.md).
 
