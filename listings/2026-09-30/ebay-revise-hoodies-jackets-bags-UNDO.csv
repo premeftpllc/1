@@ -1,0 +1,10 @@
+Info,Version=1.0.0,Template=fx_category_template_EBAY_US
+*Action(SiteID=US|Country=US|Currency=USD|Version=1193|CC=UTF-8),ItemID,StartPrice,BestOfferEnabled,MinimumBestOfferPrice
+Revise,257774100715,209.00,1,167.20
+Revise,257774100717,265.00,1,212.00
+Revise,257774100722,229.00,1,183.20
+Revise,257774103336,129.00,1,103.20
+Revise,257774103338,279.00,1,223.20
+Revise,257774103339,95.00,1,76.00
+Revise,257774103341,82.00,1,65.60
+Revise,257774103342,75.00,1,60.00
