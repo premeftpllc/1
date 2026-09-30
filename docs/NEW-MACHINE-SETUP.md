@@ -38,12 +38,14 @@ layout, retired 2026-09-26).
 | zapier | premeos-zapier | Zapier hosted MCP (URL from secrets) | 1 |
 
 Models in LM Studio on port **1235**: the verified Windows PC uses the official Qwen `qwen3-14b`
-Q4_K_M model for chat, edit and apply. Macs retain `nvidia/nemotron-3-nano-4b` until each machine
-is profiled independently using the same load and inference checks.
+Q4_K_M model for chat, edit and apply. Macs use `qwen3.5-4b` (lmstudio-community Q4_K_M **GGUF**),
+chosen by owner decision on 2026-09-30 after profiling on the 8 GB MacBook Neo: it matched Nemotron 3
+Nano 4B on a 16-run mock tool-use test (16/16 each) and finished tasks faster (median 25 s vs 40 s).
+Use the GGUF build, not MLX: LM Studio's load guardrails capped the MLX build at 4,096 context on 8 GB.
 `qwen2.5-coder-1.5b-instruct` provides autocomplete everywhere (a fill-in-the-middle code model,
 added 2026-09-26 by owner decision); `text-embedding-nomic-embed-text-v1.5` provides embeddings;
 Voyage `rerank-2` is the cloud reranker. Verified context and concurrency: PC **40,960** and
-Mac/Nemotron **32,768**, both with parallel 1.
+Mac/Qwen3.5 4B **32,768**, both with parallel 1.
 
 Not configured on any machine (owner decisions pending): Gmail and Google Calendar (Gmail and
 Calendar APIs are disabled in GCP project `851326606267`), Google Drive (128 tools, ~34K tokens per
@@ -123,11 +125,13 @@ workspace rules without de-duplicating): `ls ~/.continue/rules` should be empty 
 
 ## 5. Local model
 
-1. In LM Studio, download `qwen3-14b` on Windows or the currently verified `nvidia/nemotron-3-nano-4b` on macOS, plus `text-embedding-nomic-embed-text-v1.5`, and
-   the autocomplete model (GGUF, so its name matches the template on every machine):
+1. In LM Studio, download `qwen3-14b` on Windows or the verified `qwen3.5-4b` GGUF on macOS
+   (`~/.lmstudio/bin/lms get https://huggingface.co/lmstudio-community/Qwen3.5-4B-GGUF -y`), plus
+   `text-embedding-nomic-embed-text-v1.5`, and the autocomplete model (GGUF, so its name matches the
+   template on every machine):
    `~/.lmstudio/bin/lms get https://huggingface.co/lmstudio-community/Qwen2.5-Coder-1.5B-Instruct-GGUF -y`
 2. `python3 scripts/workspace.py server` (starts LM Studio's server on port 1235)
-3. `python3 scripts/workspace.py load` (Qwen3 at 40,960 on Windows or Nemotron at 32,768 on macOS;
+3. `python3 scripts/workspace.py load` (Qwen3 at 40,960 on Windows or Qwen3.5 4B at 32,768 on macOS;
    always parallel 1; autocomplete at 8,192, parallel 1)
 4. `python3 scripts/workspace.py health && python3 scripts/workspace.py chat && python3 scripts/workspace.py autocomplete`
    → three `PASS` lines (`PREMEOS_OK`, and the autocomplete model filling a code gap)

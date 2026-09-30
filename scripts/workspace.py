@@ -18,8 +18,8 @@ import urllib.request
 
 BASE = "http://127.0.0.1:1235"
 WINDOWS = os.name == "nt"
-MODEL = "qwen3-14b" if WINDOWS else "nvidia/nemotron-3-nano-4b"
-MODEL_NAME = "Qwen3 14B Q4_K_M" if WINDOWS else "Nemotron 3 Nano 4B"
+MODEL = "qwen3-14b" if WINDOWS else "qwen3.5-4b"
+MODEL_NAME = "Qwen3 14B Q4_K_M" if WINDOWS else "Qwen3.5 4B Q4_K_M"
 AUTOCOMPLETE = "qwen2.5-coder-1.5b-instruct"
 AUTOCOMPLETE_CONTEXT = 8192
 EMBED = "text-embedding-nomic-embed-text-v1.5"
@@ -38,8 +38,8 @@ REPO_PATH = re.compile(r"\{\{PREMEOS_REPO\}\}/([^\"'\s]+)")
 def profile():
     """Per-machine model settings.
 
-    PC: Qwen3 14B Q4_K_M uses its supported 40,960 context with parallel 1. Macs retain
-    Nemotron at 32,768 until each machine is profiled and verified independently.
+    PC: Qwen3 14B Q4_K_M uses its supported 40,960 context with parallel 1. Macs use
+    Qwen3.5 4B Q4_K_M (GGUF) at 32,768, profiled on the 8 GB MacBook Neo on 2026-09-30.
     PREMEOS_CONTEXT overrides both (e.g. a Mac mini with more memory)."""
     if WINDOWS:
         load, context, max_tokens = 40960, 40960, 16384
